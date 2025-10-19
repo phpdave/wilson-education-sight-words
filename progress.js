@@ -86,6 +86,17 @@ class ProgressTracker {
     }
 
     recordAttempt(word, isCorrect) {
+        // Ensure word exists in progress tracking
+        if (!this.progress[word]) {
+            console.warn(`Word "${word}" not found in progress tracking, initializing...`);
+            this.progress[word] = {
+                attempts: 0,
+                correct: 0,
+                lastAttempted: null,
+                accuracy: 0
+            };
+        }
+        
         // Update word progress
         this.progress[word].attempts++;
         if (isCorrect) {
@@ -203,10 +214,27 @@ class ProgressTracker {
     }
 
     getWordAccuracy(word) {
+        // Check if word exists in progress, if not return 0 accuracy
+        if (!this.progress[word]) {
+            console.warn(`Word "${word}" not found in progress tracking, returning 0 accuracy`);
+            return 0;
+        }
+        
         return this.progress[word].accuracy;
     }
 
     getWordStats(word) {
+        // Check if word exists in progress, if not return default stats
+        if (!this.progress[word]) {
+            console.warn(`Word "${word}" not found in progress tracking, returning default stats`);
+            return {
+                attempts: 0,
+                correct: 0,
+                lastAttempted: null,
+                accuracy: 0
+            };
+        }
+        
         return {
             ...this.progress[word],
             accuracy: this.progress[word].accuracy
@@ -222,7 +250,12 @@ class ProgressTracker {
         };
 
         this.wordBank.forEach(word => {
-            const wordStats = this.progress[word];
+            const wordStats = this.progress[word] || {
+                attempts: 0,
+                correct: 0,
+                lastAttempted: null,
+                accuracy: 0
+            };
             stats.totalAttempts += wordStats.attempts;
             stats.totalCorrect += wordStats.correct;
             stats.words[word] = wordStats;
@@ -238,20 +271,25 @@ class ProgressTracker {
     getWeakWords(threshold = 0.7) {
         return this.wordBank.filter(word => {
             const accuracy = this.getWordAccuracy(word);
-            return accuracy < threshold && this.progress[word].attempts > 0;
+            const wordStats = this.progress[word] || { attempts: 0 };
+            return accuracy < threshold && wordStats.attempts > 0;
         });
     }
 
     getStrongWords(threshold = 0.8) {
         return this.wordBank.filter(word => {
             const accuracy = this.getWordAccuracy(word);
-            return accuracy >= threshold && this.progress[word].attempts > 0;
+            const wordStats = this.progress[word] || { attempts: 0 };
+            return accuracy >= threshold && wordStats.attempts > 0;
         });
     }
 
     getWordsNeedingPractice(minAttempts = 3) {
         return this.wordBank.filter(word => {
-            const stats = this.progress[word];
+            const stats = this.progress[word] || {
+                attempts: 0,
+                accuracy: 0
+            };
             return stats.attempts < minAttempts || stats.accuracy < 0.7;
         });
     }

@@ -31,70 +31,140 @@ class SightWordsGame {
         this.requiredCorrectStreak = 3;
         this.starsEarned = 0;
         this.achievements = [];
+        this.recentlyUsedWords = []; // Track recently used words to prevent immediate repetition
         
         this.init();
     }
 
     generateAdaptiveWordList() {
         const progress = window.progressTracker.progress;
+        const sessionLength = 12;
+        
+        // If no progress data, use a balanced mix of all words
+        if (!progress || Object.keys(progress).length === 0) {
+            const shuffled = [...this.wordBank].sort(() => Math.random() - 0.5);
+            console.log('No progress data, using random word selection:', shuffled.slice(0, sessionLength));
+            return shuffled.slice(0, sessionLength);
+        }
+        
         const weakWords = [];
+        const mediumWords = [];
         const strongWords = [];
         
-        // Categorize words based on accuracy
+        // Categorize words based on accuracy with more nuanced categories
         this.wordBank.forEach(word => {
             const wordProgress = progress[word] || { attempts: 0, correct: 0 };
             const accuracy = wordProgress.attempts > 0 ? 
                 (wordProgress.correct / wordProgress.attempts) : 0;
             
-            if (accuracy < 0.7 || wordProgress.attempts < 3) {
+            if (accuracy < 0.5 || wordProgress.attempts < 2) {
                 weakWords.push(word);
+            } else if (accuracy < 0.8 || wordProgress.attempts < 4) {
+                mediumWords.push(word);
             } else {
                 strongWords.push(word);
             }
         });
         
-        // Create adaptive list: 70% weak words, 30% strong words
-        const sessionLength = 12;
-        const weakCount = Math.min(Math.ceil(sessionLength * 0.7), weakWords.length);
-        const strongCount = sessionLength - weakCount;
-        
-        let wordList = [];
-        
-        // Add weak words (prioritize those with lowest accuracy)
+        // Sort by accuracy (lowest first for weak, highest first for strong)
         weakWords.sort((a, b) => {
             const aAccuracy = progress[a] ? (progress[a].correct / progress[a].attempts) : 0;
             const bAccuracy = progress[b] ? (progress[b].correct / progress[b].attempts) : 0;
             return aAccuracy - bAccuracy;
         });
         
-        for (let i = 0; i < weakCount; i++) {
-            wordList.push(weakWords[i % weakWords.length]);
+        strongWords.sort((a, b) => {
+            const aAccuracy = progress[a] ? (progress[a].correct / progress[a].attempts) : 0;
+            const bAccuracy = progress[b] ? (progress[b].correct / progress[b].attempts) : 0;
+            return bAccuracy - aAccuracy;
+        });
+        
+        // Calculate distribution: 50% weak, 30% medium, 20% strong
+        const weakCount = Math.min(Math.ceil(sessionLength * 0.5), weakWords.length);
+        const mediumCount = Math.min(Math.ceil(sessionLength * 0.3), mediumWords.length);
+        const strongCount = Math.min(sessionLength - weakCount - mediumCount, strongWords.length);
+        
+        let wordList = [];
+        
+        // Add words with better distribution to prevent repetition
+        const addWordsWithVariety = (wordPool, count) => {
+            const added = [];
+            const usedInThisSession = new Set();
+            
+            // First, add words in order (no repetition within this session)
+            for (let i = 0; i < Math.min(count, wordPool.length); i++) {
+                const word = wordPool[i];
+                if (!usedInThisSession.has(word)) {
+                    added.push(word);
+                    usedInThisSession.add(word);
+                }
+            }
+            
+            // If we need more words, add them randomly from the pool (avoiding recent repetition)
+            while (added.length < count && wordPool.length > 0) {
+                const availableWords = wordPool.filter(word => !usedInThisSession.has(word));
+                if (availableWords.length === 0) {
+                    // If all words are used, allow repetition but space them out
+                    const randomWord = wordPool[Math.floor(Math.random() * wordPool.length)];
+                    added.push(randomWord);
+                } else {
+                    const randomWord = availableWords[Math.floor(Math.random() * availableWords.length)];
+                    added.push(randomWord);
+                    usedInThisSession.add(randomWord);
+                }
+            }
+            
+            return added;
+        };
+        
+        // Add words from each category
+        wordList.push(...addWordsWithVariety(weakWords, weakCount));
+        wordList.push(...addWordsWithVariety(mediumWords, mediumCount));
+        wordList.push(...addWordsWithVariety(strongWords, strongCount));
+        
+        // If we still don't have enough words, fill with random words from word bank
+        if (wordList.length < sessionLength) {
+            const usedWords = new Set(wordList);
+            const availableWords = this.wordBank.filter(word => !usedWords.has(word));
+            
+            while (wordList.length < sessionLength && availableWords.length > 0) {
+                const randomIndex = Math.floor(Math.random() * availableWords.length);
+                wordList.push(availableWords.splice(randomIndex, 1)[0]);
+            }
         }
         
-        // Add strong words
-        for (let i = 0; i < strongCount; i++) {
-            wordList.push(strongWords[i % strongWords.length]);
-        }
-        
-        // Shuffle the list
+        // Shuffle the list to randomize order
         for (let i = wordList.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [wordList[i], wordList[j]] = [wordList[j], wordList[i]];
         }
         
-        // Filter out any undefined/null values as a safety measure
+        // Filter out any undefined/null values and return
         const cleanWordList = wordList.filter(word => word && word !== undefined && word !== null);
         
-        // If we lost words, fill with remaining words from word bank
-        if (cleanWordList.length < sessionLength) {
-            const remainingWords = this.wordBank.filter(word => !cleanWordList.includes(word));
-            while (cleanWordList.length < sessionLength && remainingWords.length > 0) {
-                cleanWordList.push(remainingWords.shift());
-            }
-        }
+        console.log('Generated word list with variety:', {
+            total: cleanWordList.length,
+            weak: weakCount,
+            medium: mediumCount,
+            strong: strongCount,
+            words: cleanWordList
+        });
         
-        console.log('Generated word list:', cleanWordList);
-        return cleanWordList;
+        return cleanWordList.slice(0, sessionLength);
+    }
+
+    // Track recently used words to prevent immediate repetition
+    trackWordUsage(word) {
+        this.recentlyUsedWords.push(word);
+        // Keep only the last 6 words to prevent immediate repetition
+        if (this.recentlyUsedWords.length > 6) {
+            this.recentlyUsedWords.shift();
+        }
+    }
+
+    // Check if a word was recently used
+    wasRecentlyUsed(word) {
+        return this.recentlyUsedWords.includes(word);
     }
 
     // Micro-celebrations and enhanced feedback
@@ -410,10 +480,6 @@ class SightWordsGame {
             this.speakCurrentWord();
         });
 
-        // Reading practice audio
-        document.getElementById('speak-reading').addEventListener('click', () => {
-            this.speakCurrentWord();
-        });
     }
 
     startGame(gameType) {
@@ -422,6 +488,7 @@ class SightWordsGame {
         this.score = 0;
         this.isGameActive = true;
         this.isFirstFlashCard = true; // Reset for new game session
+        this.recentlyUsedWords = []; // Reset recently used words for new session
         
         // Generate adaptive word list prioritizing difficult words
         this.wordList = this.generateAdaptiveWordList();
@@ -447,17 +514,12 @@ class SightWordsGame {
         // Update UI
         this.updateGameHeader();
         this.showScreen('game');
-        this.loadCurrentWord();
+        this.loadCurrentWord(true); // Speak the first word
         this.setupGameMode(gameType);
         
-        // Speak game instructions and first word after a short delay
+        // Speak game instructions after a short delay
         setTimeout(() => {
-            this.speakGameInstructions(gameType).then(() => {
-                // Small pause before speaking the first word
-                return new Promise(resolve => setTimeout(resolve, 1000));
-            }).then(() => {
-                this.speakCurrentWord();
-            });
+            this.speakGameInstructions(gameType);
         }, 500);
     }
 
@@ -467,7 +529,7 @@ class SightWordsGame {
             'scramble': "Welcome to Letter Scramble! Listen to the word and arrange the letters in the correct order. Drag the letters to spell the word.",
             'multiple-choice': "Welcome to Multiple Choice! Listen to the word and click on the correct spelling from the options below.",
             'flashcards': "Welcome to Flash Cards! Look at the word and listen to help you remember it. Click 'Show Next Card' when you're ready.",
-            'reading-practice': "Welcome to Reading Practice! Look at the word and say it out loud. Click the microphone to record yourself reading the word."
+            'reading-practice': "Welcome to Reading Practice! Look at the word and try to say it out loud. If you get it wrong, you'll hear the correct pronunciation to help you learn."
         };
 
         const instruction = instructions[gameType] || "Welcome to the game! Let's start playing.";
@@ -925,40 +987,30 @@ class SightWordsGame {
         if (isCorrect) {
             feedbackMessage.innerHTML = `
                 <div class="feedback-text">Perfect! I heard you say "${recognizedText}" and you got it right! 🎉</div>
-                <div class="feedback-sentence">${this.wordStories[this.wordList[this.currentWordIndex]]}</div>
             `;
             feedbackMessage.className = 'feedback-message correct';
             this.showCelebration();
         } else {
             feedbackMessage.innerHTML = `
                 <div class="feedback-text">Good try! I heard you say "${recognizedText}" but the word is "${correctWord}"</div>
-                <div class="feedback-sentence">${this.wordStories[this.wordList[this.currentWordIndex]]}</div>
             `;
             feedbackMessage.className = 'feedback-message incorrect';
         }
         
         feedbackArea.style.display = 'block';
         
-        // Speak feedback
+        // Speak simple feedback without sentences for Reading Practice
         if (isCorrect) {
-            window.audioController.speakEncouragement().then(() => {
-                return window.audioController.speak(this.wordStories[this.wordList[this.currentWordIndex]], {
-                    rate: 0.8,
-                    pitch: 1.0,
-                    volume: 0.8
-                });
-            });
+            window.audioController.speakEncouragement();
         } else {
+            // For reading practice, speak the correct word pronunciation when student gets it wrong
             window.audioController.speak(`Good try! I heard you say ${recognizedText} but the word is ${correctWord}`, {
                 rate: 0.8,
                 pitch: 1.0,
                 volume: 0.8
             }).then(() => {
-                return window.audioController.speak(this.wordStories[this.wordList[this.currentWordIndex]], {
-                    rate: 0.8,
-                    pitch: 1.0,
-                    volume: 0.8
-                });
+                // Speak the correct word pronunciation
+                return window.audioController.speakWord(correctWord);
             });
         }
     }
@@ -1013,7 +1065,7 @@ class SightWordsGame {
         }
     }
 
-    loadCurrentWord() {
+    loadCurrentWord(shouldSpeak = false) {
         // Check if we have a valid word list
         if (!this.wordList || this.wordList.length === 0) {
             console.error('No word list available');
@@ -1027,6 +1079,9 @@ class SightWordsGame {
         }
 
         const currentWord = this.wordList[this.currentWordIndex];
+        
+        // Track word usage to prevent immediate repetition
+        this.trackWordUsage(currentWord);
         
         // Update word displays with enhanced visual elements
         document.querySelectorAll('#scramble-word-display').forEach(el => {
@@ -1079,6 +1134,14 @@ class SightWordsGame {
         // Reset game state
         this.clearFeedback();
         
+        // Speak the word if requested (for initial load)
+        // Note: Reading practice doesn't speak the word automatically - students try first
+        if (shouldSpeak && this.currentGame !== 'reading-practice') {
+            setTimeout(() => {
+                this.speakCurrentWord();
+            }, 500);
+        }
+        
         // Reset game-specific content for current game mode
         if (this.currentGame === 'scramble') {
             this.generateScrambledLetters();
@@ -1111,7 +1174,9 @@ class SightWordsGame {
 
     speakCurrentWord() {
         if (!this.isGameActive || !this.wordList || this.wordList.length === 0 || 
-            this.currentWordIndex >= this.wordList.length) return;
+            this.currentWordIndex >= this.wordList.length) {
+            return;
+        }
         
         const currentWord = this.wordList[this.currentWordIndex];
         window.audioController.speakWord(currentWord);
@@ -1721,11 +1786,14 @@ class SightWordsGame {
         if (this.currentWordIndex >= this.wordList.length) {
             this.endGame();
         } else {
-            this.loadCurrentWord();
-            // Automatically speak the next word
-            setTimeout(() => {
-                this.speakCurrentWord();
-            }, 500);
+            this.loadCurrentWord(); // Don't speak here, handle separately
+            // Automatically speak the next word (except for Reading Practice)
+            // Reading practice: students try to say the word first, then hear correct pronunciation if wrong
+            if (this.currentGame !== 'reading-practice') {
+                setTimeout(() => {
+                    this.speakCurrentWord();
+                }, 500);
+            }
         }
     }
 
