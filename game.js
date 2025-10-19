@@ -82,7 +82,19 @@ class SightWordsGame {
             [wordList[i], wordList[j]] = [wordList[j], wordList[i]];
         }
         
-        return wordList;
+        // Filter out any undefined/null values as a safety measure
+        const cleanWordList = wordList.filter(word => word && word !== undefined && word !== null);
+        
+        // If we lost words, fill with remaining words from word bank
+        if (cleanWordList.length < sessionLength) {
+            const remainingWords = this.wordBank.filter(word => !cleanWordList.includes(word));
+            while (cleanWordList.length < sessionLength && remainingWords.length > 0) {
+                cleanWordList.push(remainingWords.shift());
+            }
+        }
+        
+        console.log('Generated word list:', cleanWordList);
+        return cleanWordList;
     }
 
     // Micro-celebrations and enhanced feedback
@@ -414,6 +426,21 @@ class SightWordsGame {
         // Generate adaptive word list prioritizing difficult words
         this.wordList = this.generateAdaptiveWordList();
         
+        // Validate word list
+        if (!this.wordList || this.wordList.length === 0) {
+            console.error('Failed to generate valid word list');
+            this.wordList = [...this.wordBank]; // Fallback to word bank
+        }
+        
+        // Additional validation: ensure no undefined values
+        this.wordList = this.wordList.filter(word => word && word !== undefined && word !== null);
+        if (this.wordList.length === 0) {
+            console.error('Word list is empty after filtering, using word bank');
+            this.wordList = [...this.wordBank];
+        }
+        
+        console.log('Starting game with word list:', this.wordList);
+        
         // Start progress tracking session
         window.progressTracker.startSession(gameType);
         
@@ -683,6 +710,8 @@ class SightWordsGame {
         this.recognizedText = '';
         this.liveTranscription = '';
         this.speechTimeout = null;
+        this.retryCount = 0;
+        this.maxRetries = 2;
 
         // Check if speech recognition is supported
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -693,6 +722,13 @@ class SightWordsGame {
             this.speechRecognition.interimResults = true;
             this.speechRecognition.lang = 'en-US';
             this.speechRecognition.maxAlternatives = 1;
+            
+            // Add additional configuration for better speech recognition
+            if ('webkitSpeechRecognition' in window) {
+                // Webkit-specific settings
+                this.speechRecognition.continuous = true;
+                this.speechRecognition.interimResults = true;
+            }
 
             this.speechRecognition.onstart = () => {
                 this.isListening = true;
@@ -731,10 +767,46 @@ class SightWordsGame {
 
             this.speechRecognition.onerror = (event) => {
                 console.error('Speech recognition error:', event.error);
-                this.updateRecordingStatus('error', 'Sorry, I couldn\'t hear you. Try again!');
+                
+                let errorMessage = 'Sorry, I couldn\'t hear you. Try again!';
+                
+                // Handle different types of errors with specific messages
+                switch (event.error) {
+                    case 'no-speech':
+                        errorMessage = 'I didn\'t hear anything. Please speak clearly and try again!';
+                        break;
+                    case 'audio-capture':
+                        errorMessage = 'Microphone not available. Please check your microphone and try again!';
+                        break;
+                    case 'not-allowed':
+                        errorMessage = 'Microphone access denied. Please allow microphone access and try again!';
+                        break;
+                    case 'network':
+                        errorMessage = 'Network error. Please check your connection and try again!';
+                        break;
+                    case 'aborted':
+                        errorMessage = 'Speech recognition was interrupted. Please try again!';
+                        break;
+                    case 'language-not-supported':
+                        errorMessage = 'Language not supported. Please try again!';
+                        break;
+                    case 'service-not-allowed':
+                        errorMessage = 'Speech recognition not allowed. Please try again!';
+                        break;
+                    default:
+                        errorMessage = 'Speech recognition error. Please try again!';
+                }
+                
+                this.updateRecordingStatus('error', errorMessage);
                 this.updateRecordButton(false);
                 this.isListening = false;
                 this.hideLiveTranscription();
+                
+                // Clear any existing timeout
+                if (this.speechTimeout) {
+                    clearTimeout(this.speechTimeout);
+                    this.speechTimeout = null;
+                }
             };
 
             this.speechRecognition.onend = () => {
@@ -1395,21 +1467,34 @@ class SightWordsGame {
         
         const currentWord = this.wordList[this.currentWordIndex];
         
-        // Safety check
-        if (!currentWord) {
-            console.error('Current word is undefined:', {
+        // Enhanced debugging and safety check
+        if (!currentWord || currentWord === undefined || currentWord === null) {
+            console.error('Current word is undefined/null:', {
                 wordList: this.wordList,
                 currentWordIndex: this.currentWordIndex,
-                wordListLength: this.wordList?.length
+                wordListLength: this.wordList?.length,
+                wordAtIndex: this.wordList[this.currentWordIndex],
+                wordListContents: this.wordList.map((word, index) => ({ index, word, type: typeof word }))
             });
-            return;
+            
+            // Try to find a valid word in the list
+            const validWord = this.wordList.find(word => word && word !== undefined && word !== null);
+            if (validWord) {
+                console.warn('Using fallback word:', validWord);
+                this.wordList[this.currentWordIndex] = validWord;
+            } else {
+                console.error('No valid words found in word list');
+                return;
+            }
         }
         
-        const choices = [currentWord];
+        // Use the current word (either original or fallback)
+        const finalCurrentWord = this.wordList[this.currentWordIndex];
+        const choices = [finalCurrentWord];
         
         // Add distractor words
         const distractors = this.distractorWords.filter(word => 
-            word.length === currentWord.length && word !== currentWord
+            word.length === finalCurrentWord.length && word !== finalCurrentWord
         );
         
         // Shuffle and take 2-3 distractors
