@@ -653,7 +653,7 @@ class SightWordsGame {
                     e.preventDefault();
                     e.stopPropagation();
                 }
-            });
+            }, { passive: false });
         });
     }
 
@@ -1149,11 +1149,23 @@ class SightWordsGame {
         if (!this.wordList || this.wordList.length === 0 || 
             this.currentWordIndex >= this.wordList.length || 
             this.currentWordIndex < 0) {
-            console.error('Invalid word list or current word index');
+            console.error('Invalid word list or current word index in generateScrambledLetters');
             return;
         }
         
         const currentWord = this.wordList[this.currentWordIndex];
+        
+        // Check if current word is valid
+        if (!currentWord || currentWord === undefined || currentWord === null || typeof currentWord !== 'string') {
+            console.error('Current word is invalid in generateScrambledLetters:', {
+                currentWord,
+                wordList: this.wordList,
+                currentWordIndex: this.currentWordIndex,
+                wordListLength: this.wordList?.length
+            });
+            return;
+        }
+        
         const letters = currentWord.split('');
         
         // Shuffle letters
