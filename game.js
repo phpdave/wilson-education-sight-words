@@ -335,6 +335,10 @@ class SightWordsGame {
 
         // Back button
         document.getElementById('back-btn').addEventListener('click', () => {
+            // Stop speech recognition session if active
+            if (this.speechRecognitionActive) {
+                this.stopSpeechRecognitionSession();
+            }
             this.endGame();
         });
 
@@ -766,14 +770,17 @@ class SightWordsGame {
         const recognizedDiv = document.getElementById('recognized-text');
         const liveTranscriptionDiv = document.getElementById('live-transcription');
 
-        // Initialize speech recognition
-        this.speechRecognition = null;
-        this.isListening = false;
-        this.recognizedText = '';
-        this.liveTranscription = '';
-        this.speechTimeout = null;
-        this.retryCount = 0;
-        this.maxRetries = 2;
+        // Initialize speech recognition (only if not already initialized)
+        if (!this.speechRecognition) {
+            this.speechRecognition = null;
+            this.isListening = false;
+            this.recognizedText = '';
+            this.liveTranscription = '';
+            this.speechTimeout = null;
+            this.retryCount = 0;
+            this.maxRetries = 2;
+            this.speechRecognitionActive = false; // Track if recognition is active for the session
+        }
 
         // Check if speech recognition is supported
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -818,9 +825,14 @@ class SightWordsGame {
 
                 // Only process final results and only if we have substantial text
                 if (finalTranscript && finalTranscript.trim().length > 0) {
+                    console.log('Final transcript received:', finalTranscript);
+                    console.log('Current word:', this.wordList[this.currentWordIndex]);
+                    console.log('Live transcription:', this.liveTranscription);
+                    
                     // Add a delay to give user time to finish speaking
                     setTimeout(() => {
                         if (this.isListening) {
+                            console.log('Processing reading result with:', this.liveTranscription);
                             this.processReadingResult(this.liveTranscription);
                         }
                     }, 1500); // Wait 1.5 seconds after final result
@@ -885,12 +897,17 @@ class SightWordsGame {
         const newRecordBtn = recordBtn.cloneNode(true);
         recordBtn.parentNode.replaceChild(newRecordBtn, recordBtn);
 
-        // Record button event listener
+        // Record button event listener - now just toggles listening state
         newRecordBtn.addEventListener('click', () => {
-            if (!this.isListening && this.speechRecognition) {
-                this.startSpeechRecognition();
-            } else if (this.isListening) {
-                this.stopSpeechRecognition();
+            if (!this.speechRecognitionActive) {
+                // Start the speech recognition session
+                this.startSpeechRecognitionSession();
+            } else if (!this.isListening) {
+                // Start listening for current word
+                this.startListeningForWord();
+            } else {
+                // Stop listening for current word (but keep session active)
+                this.stopListeningForWord();
             }
         });
 
@@ -898,8 +915,20 @@ class SightWordsGame {
         this.resetReadingUI();
     }
 
-    startSpeechRecognition() {
-        if (this.speechRecognition && !this.isListening) {
+    startSpeechRecognitionSession() {
+        if (this.speechRecognition && !this.speechRecognitionActive) {
+            this.speechRecognitionActive = true;
+            this.recognizedText = '';
+            this.clearRecognizedText();
+            this.speechRecognition.start();
+            
+            this.updateRecordingStatus('ready', 'Speech recognition started! Click to say the word.');
+            this.updateRecordButton(false);
+        }
+    }
+
+    startListeningForWord() {
+        if (this.speechRecognition && this.speechRecognitionActive && !this.isListening) {
             this.recognizedText = '';
             this.clearRecognizedText();
             this.speechRecognition.start();
@@ -908,13 +937,13 @@ class SightWordsGame {
             this.speechTimeout = setTimeout(() => {
                 if (this.isListening) {
                     this.updateRecordingStatus('ready', 'No speech detected. Try again!');
-                    this.stopSpeechRecognition();
+                    this.stopListeningForWord();
                 }
             }, 10000);
         }
     }
 
-    stopSpeechRecognition() {
+    stopListeningForWord() {
         if (this.speechRecognition && this.isListening) {
             this.speechRecognition.stop();
         }
@@ -926,16 +955,47 @@ class SightWordsGame {
         }
     }
 
+    stopSpeechRecognitionSession() {
+        if (this.speechRecognition && this.speechRecognitionActive) {
+            this.speechRecognition.stop();
+            this.speechRecognitionActive = false;
+        }
+        
+        // Clear the timeout
+        if (this.speechTimeout) {
+            clearTimeout(this.speechTimeout);
+            this.speechTimeout = null;
+        }
+    }
+
+    // Legacy method for backward compatibility
+    startSpeechRecognition() {
+        this.startListeningForWord();
+    }
+
+    stopSpeechRecognition() {
+        this.stopListeningForWord();
+    }
+
     processReadingResult(recognizedText) {
-        // Stop listening once we have a result
+        // Stop listening for current word once we have a result
         if (this.isListening) {
-            this.stopSpeechRecognition();
+            this.stopListeningForWord();
         }
 
         const currentWord = this.wordList[this.currentWordIndex].toLowerCase();
         
+        console.log('processReadingResult called with:');
+        console.log('- recognizedText:', recognizedText);
+        console.log('- currentWord:', currentWord);
+        console.log('- recognizedText type:', typeof recognizedText);
+        console.log('- currentWord type:', typeof currentWord);
+        
         // Flexible matching: check if the target word appears anywhere in the transcription
         const isCorrect = recognizedText.includes(currentWord);
+        
+        console.log('- isCorrect:', isCorrect);
+        console.log('- includes check:', recognizedText, 'includes', currentWord, '=', isCorrect);
         
         // Display what was heard
         this.displayRecognizedText(recognizedText, isCorrect);
@@ -1016,7 +1076,11 @@ class SightWordsGame {
     }
 
     resetReadingUI() {
-        this.updateRecordingStatus('', '');
+        if (this.speechRecognitionActive) {
+            this.updateRecordingStatus('ready', 'Click to say the word.');
+        } else {
+            this.updateRecordingStatus('', '');
+        }
         this.updateRecordButton(false);
         this.clearRecognizedText();
         this.hideLiveTranscription();
@@ -1169,6 +1233,11 @@ class SightWordsGame {
         } else if (this.currentGame === 'reading-practice') {
             // Reset reading practice UI
             this.resetReadingUI();
+            // If speech recognition session is active, prepare for next word
+            if (this.speechRecognitionActive) {
+                this.updateRecordingStatus('ready', 'Click to say the next word.');
+                this.updateRecordButton(false);
+            }
         }
     }
 
@@ -1799,6 +1868,11 @@ class SightWordsGame {
 
     endGame() {
         this.isGameActive = false;
+        
+        // Stop speech recognition session if active
+        if (this.speechRecognitionActive) {
+            this.stopSpeechRecognitionSession();
+        }
         
         // End progress tracking session
         const sessionSummary = window.progressTracker.endSession();
