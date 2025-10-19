@@ -1,0 +1,1743 @@
+// Sight Words Game - Main Game Logic
+// Handles game state management, UI interactions, and game flow
+
+class SightWordsGame {
+    constructor() {
+        this.currentGame = null;
+        this.currentWordIndex = 0;
+        this.wordList = [];
+        this.score = 0;
+        this.gameState = 'welcome'; // welcome, playing, results
+        this.isGameActive = false;
+        this.isFirstFlashCard = true; // Track if this is the first flash card flip
+        
+        this.wordBank = ['are', 'does', 'from', 'both', 'of', 'your', 'want'];
+        this.distractorWords = [
+            'air', 'our', 'doze', 'dose', 'form', 'fro', 'boat', 'bath', 'off', 'if', 
+            'you', 'yore', 'went', 'wont', 'ant', 'and', 'the', 'is', 'it', 'in'
+        ];
+        
+        // Enhanced learning features
+        this.wordStories = {
+            'are': 'We are friends!',
+            'does': 'What does the cat do?',
+            'from': 'I come from home.',
+            'both': 'Both of us like ice cream!',
+            'of': 'A cup of milk.',
+            'your': 'Is this your toy?',
+            'want': 'I want to play!'
+        };
+        this.consecutiveCorrect = {};
+        this.requiredCorrectStreak = 3;
+        this.starsEarned = 0;
+        this.achievements = [];
+        
+        this.init();
+    }
+
+    generateAdaptiveWordList() {
+        const progress = window.progressTracker.progress;
+        const weakWords = [];
+        const strongWords = [];
+        
+        // Categorize words based on accuracy
+        this.wordBank.forEach(word => {
+            const wordProgress = progress[word] || { attempts: 0, correct: 0 };
+            const accuracy = wordProgress.attempts > 0 ? 
+                (wordProgress.correct / wordProgress.attempts) : 0;
+            
+            if (accuracy < 0.7 || wordProgress.attempts < 3) {
+                weakWords.push(word);
+            } else {
+                strongWords.push(word);
+            }
+        });
+        
+        // Create adaptive list: 70% weak words, 30% strong words
+        const sessionLength = 12;
+        const weakCount = Math.min(Math.ceil(sessionLength * 0.7), weakWords.length);
+        const strongCount = sessionLength - weakCount;
+        
+        let wordList = [];
+        
+        // Add weak words (prioritize those with lowest accuracy)
+        weakWords.sort((a, b) => {
+            const aAccuracy = progress[a] ? (progress[a].correct / progress[a].attempts) : 0;
+            const bAccuracy = progress[b] ? (progress[b].correct / progress[b].attempts) : 0;
+            return aAccuracy - bAccuracy;
+        });
+        
+        for (let i = 0; i < weakCount; i++) {
+            wordList.push(weakWords[i % weakWords.length]);
+        }
+        
+        // Add strong words
+        for (let i = 0; i < strongCount; i++) {
+            wordList.push(strongWords[i % strongWords.length]);
+        }
+        
+        // Shuffle the list
+        for (let i = wordList.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [wordList[i], wordList[j]] = [wordList[j], wordList[i]];
+        }
+        
+        return wordList;
+    }
+
+    // Micro-celebrations and enhanced feedback
+    showMicroCelebration(type, element = null) {
+        const celebrations = {
+            'letter': '✨',
+            'word': '🌟',
+            'streak': '🎉',
+            'achievement': '🏆'
+        };
+        
+        const emoji = celebrations[type] || '✨';
+        const celebration = document.createElement('div');
+        celebration.className = 'micro-celebration';
+        celebration.textContent = emoji;
+        celebration.style.cssText = `
+            position: absolute;
+            font-size: 2em;
+            pointer-events: none;
+            z-index: 1000;
+            animation: microCelebration 1s ease-out forwards;
+        `;
+        
+        if (element) {
+            const rect = element.getBoundingClientRect();
+            celebration.style.left = (rect.left + rect.width / 2) + 'px';
+            celebration.style.top = (rect.top - 20) + 'px';
+        } else {
+            celebration.style.left = '50%';
+            celebration.style.top = '50%';
+            celebration.style.transform = 'translate(-50%, -50%)';
+        }
+        
+        document.body.appendChild(celebration);
+        
+        setTimeout(() => {
+            celebration.remove();
+        }, 1000);
+    }
+
+    checkAchievements() {
+        const newAchievements = [];
+        
+        // First correct answer
+        if (this.score === 10 && !this.achievements.includes('first-correct')) {
+            newAchievements.push('first-correct');
+            this.showAchievement('🎯', 'First Success!');
+        }
+        
+        // Perfect streak
+        if (this.score >= 50 && !this.achievements.includes('perfect-streak')) {
+            newAchievements.push('perfect-streak');
+            this.showAchievement('🔥', 'Perfect Streak!');
+        }
+        
+        // Word mastery
+        Object.keys(this.consecutiveCorrect).forEach(word => {
+            if (this.consecutiveCorrect[word] >= this.requiredCorrectStreak && 
+                !this.achievements.includes(`master-${word}`)) {
+                newAchievements.push(`master-${word}`);
+                this.showAchievement('👑', `${word.toUpperCase()} Master!`);
+            }
+        });
+        
+        this.achievements.push(...newAchievements);
+    }
+
+    showAchievement(emoji, text) {
+        const achievement = document.createElement('div');
+        achievement.className = 'achievement-popup';
+        achievement.innerHTML = `
+            <div class="achievement-content">
+                <div class="achievement-emoji">${emoji}</div>
+                <div class="achievement-text">${text}</div>
+            </div>
+        `;
+        achievement.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #ff6b6b, #feca57);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            z-index: 1000;
+            animation: achievementSlide 0.5s ease-out;
+            font-family: 'Comic Sans MS', cursive;
+            font-weight: bold;
+        `;
+        
+        document.body.appendChild(achievement);
+        
+        setTimeout(() => {
+            achievement.style.animation = 'achievementSlideOut 0.5s ease-in forwards';
+            setTimeout(() => achievement.remove(), 500);
+        }, 3000);
+    }
+
+    init() {
+        this.setupEventListeners();
+        this.setupGlobalTyping();
+        this.updateProgressDisplay();
+        this.showScreen('welcome');
+    }
+
+    setupGlobalTyping() {
+        // Set up global typing listener that persists throughout the game
+        document.addEventListener('keydown', (e) => {
+            console.log('Key pressed:', e.key, 'Current game:', this.currentGame, 'Game active:', this.isGameActive);
+            
+            // Handle refresh shortcuts (Command+R on Mac, Ctrl+R on Windows/Linux)
+            if ((e.metaKey || e.ctrlKey) && e.key === 'r') {
+                // Allow default browser refresh behavior
+                return;
+            }
+            
+            if (this.currentGame === 'spelling' && this.isGameActive) {
+                // Find the current input field (it might have been replaced)
+                const input = document.getElementById('word-input');
+                const checkBtn = document.getElementById('check-spelling');
+                
+                console.log('Input found:', !!input, 'Check button found:', !!checkBtn, 'Check disabled:', checkBtn?.disabled);
+                
+                if (input && checkBtn) {
+                    // Handle Enter key to submit answer
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (!checkBtn.disabled) {
+                            console.log('Enter pressed - submitting answer');
+                            this.checkSpellingAnswer();
+                            this.disableCheckButton();
+                        }
+                        return;
+                    }
+                    
+                    // If it's a letter, number, or common key, add the character
+                    if (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Delete') {
+                        e.preventDefault();
+                        console.log('Processing key:', e.key);
+                        
+                        if (e.key === 'Backspace') {
+                            input.value = input.value.slice(0, -1);
+                        } else if (e.key === 'Delete') {
+                            input.value = '';
+                        } else if (e.key.match(/[a-zA-Z]/)) {
+                            // Only allow letters, convert to lowercase
+                            input.value += e.key.toLowerCase();
+                        }
+                        
+                        // Trigger input event to update button state
+                        input.dispatchEvent(new Event('input'));
+                        console.log('Input value after typing:', input.value);
+                    }
+                }
+            }
+        });
+    }
+
+    setupEventListeners() {
+        // Game selection buttons
+        document.querySelectorAll('.game-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const gameType = e.currentTarget.dataset.game;
+                this.startGame(gameType);
+            });
+        });
+
+        // Back button
+        document.getElementById('back-btn').addEventListener('click', () => {
+            this.endGame();
+        });
+
+        // Results screen buttons
+        document.getElementById('play-again').addEventListener('click', () => {
+            this.startGame(this.currentGame);
+        });
+
+        document.getElementById('change-game').addEventListener('click', () => {
+            this.showScreen('welcome');
+        });
+
+        document.getElementById('view-progress').addEventListener('click', () => {
+            this.showParentDashboard();
+        });
+
+        // Dashboard back button
+        document.getElementById('dashboard-back-btn').addEventListener('click', () => {
+            this.showScreen('welcome');
+        });
+
+        // Audio buttons
+        this.setupAudioButtons();
+    }
+
+    showParentDashboard() {
+        this.showScreen('parent-dashboard');
+        this.populateDashboard();
+    }
+
+    populateDashboard() {
+        const analytics = window.progressTracker.getDetailedAnalytics();
+        
+        // Update learning insights
+        document.getElementById('strongest-words').textContent = 
+            analytics.insights.strongestWords.join(', ') || 'None yet';
+        
+        document.getElementById('focus-areas').textContent = 
+            analytics.insights.weakestWords.join(', ') || 'All mastered!';
+        
+        document.getElementById('progress-trend').textContent = 
+            analytics.improvementTrends.trend === 'improving' ? '📈 Improving' :
+            analytics.improvementTrends.trend === 'declining' ? '📉 Needs Focus' :
+            analytics.improvementTrends.trend === 'stable' ? '📊 Steady' : '🆕 Getting Started';
+        
+        document.getElementById('learning-style').textContent = 
+            analytics.insights.learningStyle.charAt(0).toUpperCase() + 
+            analytics.insights.learningStyle.slice(1);
+
+        // Populate word progress grid
+        this.populateWordProgressGrid(analytics);
+
+        // Populate recommendations
+        this.populateRecommendations(analytics.recommendedActions);
+
+        // Populate session history
+        this.populateSessionHistory(analytics.sessionHistory);
+    }
+
+    populateWordProgressGrid(analytics) {
+        const grid = document.getElementById('word-progress-grid');
+        grid.innerHTML = '';
+
+        this.wordBank.forEach(word => {
+            const wordData = analytics.wordStats[word] || { attempts: 0, correct: 0, accuracy: 0 };
+            const accuracy = Math.round(wordData.accuracy * 100);
+            
+            const card = document.createElement('div');
+            card.className = `word-progress-card ${accuracy >= 70 ? 'strong' : accuracy < 50 ? 'weak' : ''}`;
+            
+            card.innerHTML = `
+                <div class="word-progress-title">${word.toUpperCase()}</div>
+                <div class="word-progress-stats">
+                    ${accuracy}% accuracy<br>
+                    ${wordData.attempts} attempts
+                </div>
+            `;
+            
+            grid.appendChild(card);
+        });
+    }
+
+    populateRecommendations(recommendations) {
+        const list = document.getElementById('recommendations-list');
+        list.innerHTML = '';
+
+        if (recommendations.length === 0) {
+            list.innerHTML = '<div class="recommendation-item">Keep practicing! You\'re doing great! 🌟</div>';
+            return;
+        }
+
+        recommendations.forEach(rec => {
+            const item = document.createElement('div');
+            item.className = 'recommendation-item';
+            item.textContent = rec;
+            list.appendChild(item);
+        });
+    }
+
+    populateSessionHistory(sessions) {
+        const history = document.getElementById('session-history');
+        history.innerHTML = '';
+
+        if (sessions.length === 0) {
+            history.innerHTML = '<div class="session-item">No sessions yet. Start playing to see your progress!</div>';
+            return;
+        }
+
+        sessions.slice(-5).reverse().forEach(session => {
+            const item = document.createElement('div');
+            item.className = 'session-item';
+            
+            const date = new Date(session.date).toLocaleDateString();
+            const accuracy = Math.round(session.accuracy * 100);
+            
+            item.innerHTML = `
+                <div class="session-date">${date}</div>
+                <div class="session-stats">${accuracy}% accuracy • ${session.gameType}</div>
+            `;
+            
+            history.appendChild(item);
+        });
+    }
+
+    setupAudioButtons() {
+        // Spelling game audio
+        document.getElementById('speak-word').addEventListener('click', () => {
+            this.speakCurrentWord();
+        });
+
+        // Scramble game audio
+        document.getElementById('speak-scramble').addEventListener('click', () => {
+            this.speakCurrentWord();
+        });
+
+        // Multiple choice audio
+        document.getElementById('speak-mc').addEventListener('click', () => {
+            this.speakCurrentWord();
+        });
+
+        // Flash cards audio
+        document.getElementById('speak-flash').addEventListener('click', () => {
+            this.speakCurrentWord();
+        });
+
+        // Reading practice audio
+        document.getElementById('speak-reading').addEventListener('click', () => {
+            this.speakCurrentWord();
+        });
+    }
+
+    startGame(gameType) {
+        this.currentGame = gameType;
+        this.currentWordIndex = 0;
+        this.score = 0;
+        this.isGameActive = true;
+        this.isFirstFlashCard = true; // Reset for new game session
+        
+        // Generate adaptive word list prioritizing difficult words
+        this.wordList = this.generateAdaptiveWordList();
+        
+        // Start progress tracking session
+        window.progressTracker.startSession(gameType);
+        
+        // Update UI
+        this.updateGameHeader();
+        this.showScreen('game');
+        this.loadCurrentWord();
+        this.setupGameMode(gameType);
+        
+        // Speak game instructions and first word after a short delay
+        setTimeout(() => {
+            this.speakGameInstructions(gameType).then(() => {
+                // Small pause before speaking the first word
+                return new Promise(resolve => setTimeout(resolve, 1000));
+            }).then(() => {
+                this.speakCurrentWord();
+            });
+        }, 500);
+    }
+
+    speakGameInstructions(gameType) {
+        const instructions = {
+            'spelling': "Welcome to the Spelling Challenge! Listen to the word and type it in the box. Click the speaker button if you need to hear the word again.",
+            'scramble': "Welcome to Letter Scramble! Listen to the word and arrange the letters in the correct order. Drag the letters to spell the word.",
+            'multiple-choice': "Welcome to Multiple Choice! Listen to the word and click on the correct spelling from the options below.",
+            'flashcards': "Welcome to Flash Cards! Look at the word and listen to help you remember it. Click 'Show Next Card' when you're ready.",
+            'reading-practice': "Welcome to Reading Practice! Look at the word and say it out loud. Click the microphone to record yourself reading the word."
+        };
+
+        const instruction = instructions[gameType] || "Welcome to the game! Let's start playing.";
+        
+        return window.audioController.speak(instruction, {
+            rate: 0.8,
+            pitch: 1.0,
+            volume: 0.8
+        });
+    }
+
+    setupGameMode(gameType) {
+        // Hide all game modes
+        document.querySelectorAll('.game-mode').forEach(mode => {
+            mode.classList.remove('active');
+        });
+
+        // Show selected game mode
+        const gameModeMap = {
+            'spelling': 'spelling-game',
+            'scramble': 'scramble-game',
+            'multiple-choice': 'multiple-choice-game',
+            'flashcards': 'flashcards-game',
+            'reading-practice': 'reading-practice-game'
+        };
+
+        const activeMode = document.getElementById(gameModeMap[gameType]);
+        if (activeMode) {
+            activeMode.classList.add('active');
+        }
+
+        // Setup game-specific event listeners
+        this.setupGameSpecificListeners(gameType);
+    }
+
+    setupGameSpecificListeners(gameType) {
+        switch (gameType) {
+            case 'spelling':
+                this.setupSpellingGame();
+                break;
+            case 'scramble':
+                this.setupScrambleGame();
+                break;
+            case 'multiple-choice':
+                this.setupMultipleChoiceGame();
+                break;
+            case 'flashcards':
+                this.setupFlashCardsGame();
+                break;
+            case 'reading-practice':
+                this.setupReadingPracticeGame();
+                break;
+        }
+    }
+
+    setupSpellingGame() {
+        const input = document.getElementById('word-input');
+        const checkBtn = document.getElementById('check-spelling');
+
+        // Clear input
+        input.value = '';
+        input.focus();
+
+        // Remove existing listeners to prevent duplicates
+        const newCheckBtn = checkBtn.cloneNode(true);
+        const newInput = input.cloneNode(true);
+        
+        checkBtn.parentNode.replaceChild(newCheckBtn, checkBtn);
+        input.parentNode.replaceChild(newInput, input);
+
+        // Add event listeners to the new elements
+        newCheckBtn.addEventListener('click', () => {
+            if (!newCheckBtn.disabled) {
+                this.checkSpellingAnswer();
+                this.disableCheckButton();
+            }
+        });
+
+        newInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !newCheckBtn.disabled) {
+                this.checkSpellingAnswer();
+                this.disableCheckButton();
+            }
+        });
+
+        // Update check button state on input change
+        newInput.addEventListener('input', () => {
+            this.updateCheckButtonState();
+        });
+
+        // Initial button state
+        this.updateCheckButtonState();
+    }
+
+    disableCheckButton() {
+        const checkBtn = document.getElementById('check-spelling');
+        if (checkBtn) {
+            checkBtn.disabled = true;
+            checkBtn.style.opacity = '0.5';
+            checkBtn.style.cursor = 'not-allowed';
+            checkBtn.textContent = 'Submitted';
+        }
+    }
+
+    updateCheckButtonState() {
+        const input = document.getElementById('word-input');
+        const checkBtn = document.getElementById('check-spelling');
+        
+        if (input && checkBtn) {
+            const hasText = input.value.trim().length > 0;
+            checkBtn.disabled = !hasText;
+            checkBtn.style.opacity = hasText ? '1' : '0.5';
+            checkBtn.style.cursor = hasText ? 'pointer' : 'not-allowed';
+        }
+    }
+
+    setupScrambleGame() {
+        this.generateScrambledLetters();
+        this.setupDragAndDrop();
+        
+        const checkBtn = document.getElementById('check-scramble');
+
+        // Remove existing listeners to prevent duplicates
+        const newCheckBtn = checkBtn.cloneNode(true);
+        
+        checkBtn.parentNode.replaceChild(newCheckBtn, checkBtn);
+
+        newCheckBtn.addEventListener('click', () => {
+            if (!newCheckBtn.disabled) {
+                this.checkScrambleAnswer();
+                this.disableScrambleCheckButton();
+            }
+        });
+    }
+
+    disableScrambleCheckButton() {
+        const checkBtn = document.getElementById('check-scramble');
+        if (checkBtn) {
+            checkBtn.disabled = true;
+            checkBtn.style.opacity = '0.5';
+            checkBtn.style.cursor = 'not-allowed';
+            checkBtn.textContent = 'Submitted';
+        }
+    }
+
+    resetScrambleCheckButton() {
+        const checkBtn = document.getElementById('check-scramble');
+        if (checkBtn) {
+            checkBtn.disabled = false;
+            checkBtn.style.opacity = '1';
+            checkBtn.style.cursor = 'pointer';
+            checkBtn.textContent = 'Check';
+        }
+    }
+
+    setupMultipleChoiceGame() {
+        this.generateMultipleChoiceOptions();
+        this.enableMultipleChoiceOptions();
+        
+        document.querySelectorAll('.choice-option').forEach(option => {
+            option.addEventListener('click', (e) => {
+                // Prevent any interaction if already selected or disabled
+                if (e.target.classList.contains('selected') || e.target.disabled) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+                
+                this.selectMultipleChoice(e.target.textContent);
+                this.disableMultipleChoiceOptions();
+            });
+            
+            // Prevent any other interactions
+            option.addEventListener('mousedown', (e) => {
+                if (e.target.disabled) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            });
+            
+            option.addEventListener('touchstart', (e) => {
+                if (e.target.disabled) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            });
+        });
+    }
+
+    disableMultipleChoiceOptions() {
+        document.querySelectorAll('.choice-option').forEach(option => {
+            option.disabled = true;
+            option.style.cursor = 'not-allowed';
+            option.style.opacity = '0.7';
+            option.style.pointerEvents = 'none'; // Prevent all mouse/touch events
+            
+            // Remove any hover effects
+            option.classList.add('disabled');
+        });
+    }
+
+    enableMultipleChoiceOptions() {
+        document.querySelectorAll('.choice-option').forEach(option => {
+            option.disabled = false;
+            option.style.cursor = 'pointer';
+            option.style.opacity = '1';
+            option.style.pointerEvents = 'auto';
+            
+            // Remove disabled class and any selection classes
+            option.classList.remove('disabled', 'selected');
+        });
+    }
+
+    setupFlashCardsGame() {
+        const flipBtn = document.getElementById('flip-card');
+        const card = document.getElementById('flash-card');
+
+        // Reset card to unflipped state
+        card.classList.remove('flipped');
+
+        // Remove existing listeners to prevent duplicates
+        const newFlipBtn = flipBtn.cloneNode(true);
+        
+        flipBtn.parentNode.replaceChild(newFlipBtn, flipBtn);
+
+        newFlipBtn.addEventListener('click', () => {
+            this.flipFlashCard();
+        });
+    }
+
+    setupReadingPracticeGame() {
+        const recordBtn = document.getElementById('record-button');
+        const statusDiv = document.getElementById('recording-status');
+        const recognizedDiv = document.getElementById('recognized-text');
+        const liveTranscriptionDiv = document.getElementById('live-transcription');
+
+        // Initialize speech recognition
+        this.speechRecognition = null;
+        this.isListening = false;
+        this.recognizedText = '';
+        this.liveTranscription = '';
+        this.speechTimeout = null;
+
+        // Check if speech recognition is supported
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            this.speechRecognition = new SpeechRecognition();
+            
+            this.speechRecognition.continuous = true;
+            this.speechRecognition.interimResults = true;
+            this.speechRecognition.lang = 'en-US';
+            this.speechRecognition.maxAlternatives = 1;
+
+            this.speechRecognition.onstart = () => {
+                this.isListening = true;
+                this.updateRecordingStatus('recording', 'Listening... Say the word now!');
+                this.updateRecordButton(true);
+                this.showLiveTranscription();
+            };
+
+            this.speechRecognition.onresult = (event) => {
+                let interimTranscript = '';
+                let finalTranscript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript;
+                    } else {
+                        interimTranscript += transcript;
+                    }
+                }
+
+                // Update live transcription display
+                this.liveTranscription = (finalTranscript + interimTranscript).toLowerCase().trim();
+                this.updateLiveTranscription(this.liveTranscription);
+
+                // Only process final results and only if we have substantial text
+                if (finalTranscript && finalTranscript.trim().length > 0) {
+                    // Add a delay to give user time to finish speaking
+                    setTimeout(() => {
+                        if (this.isListening) {
+                            this.processReadingResult(this.liveTranscription);
+                        }
+                    }, 1500); // Wait 1.5 seconds after final result
+                }
+            };
+
+            this.speechRecognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                this.updateRecordingStatus('error', 'Sorry, I couldn\'t hear you. Try again!');
+                this.updateRecordButton(false);
+                this.isListening = false;
+                this.hideLiveTranscription();
+            };
+
+            this.speechRecognition.onend = () => {
+                this.isListening = false;
+                this.updateRecordButton(false);
+                this.hideLiveTranscription();
+            };
+        } else {
+            // Fallback for browsers without speech recognition
+            this.updateRecordingStatus('error', 'Speech recognition not supported. Please use a modern browser.');
+        }
+
+        // Remove existing listeners to prevent duplicates
+        const newRecordBtn = recordBtn.cloneNode(true);
+        recordBtn.parentNode.replaceChild(newRecordBtn, recordBtn);
+
+        // Record button event listener
+        newRecordBtn.addEventListener('click', () => {
+            if (!this.isListening && this.speechRecognition) {
+                this.startSpeechRecognition();
+            } else if (this.isListening) {
+                this.stopSpeechRecognition();
+            }
+        });
+
+        // Reset UI
+        this.resetReadingUI();
+    }
+
+    startSpeechRecognition() {
+        if (this.speechRecognition && !this.isListening) {
+            this.recognizedText = '';
+            this.clearRecognizedText();
+            this.speechRecognition.start();
+            
+            // Set a timeout to stop listening after 10 seconds if no speech detected
+            this.speechTimeout = setTimeout(() => {
+                if (this.isListening) {
+                    this.updateRecordingStatus('ready', 'No speech detected. Try again!');
+                    this.stopSpeechRecognition();
+                }
+            }, 10000);
+        }
+    }
+
+    stopSpeechRecognition() {
+        if (this.speechRecognition && this.isListening) {
+            this.speechRecognition.stop();
+        }
+        
+        // Clear the timeout
+        if (this.speechTimeout) {
+            clearTimeout(this.speechTimeout);
+            this.speechTimeout = null;
+        }
+    }
+
+    processReadingResult(recognizedText) {
+        // Stop listening once we have a result
+        if (this.isListening) {
+            this.stopSpeechRecognition();
+        }
+
+        const currentWord = this.wordList[this.currentWordIndex].toLowerCase();
+        
+        // Flexible matching: check if the target word appears anywhere in the transcription
+        const isCorrect = recognizedText.includes(currentWord);
+        
+        // Display what was heard
+        this.displayRecognizedText(recognizedText, isCorrect);
+        
+        // Update recording status
+        if (isCorrect) {
+            this.updateRecordingStatus('ready', 'Great job! You said it correctly!');
+        } else {
+            this.updateRecordingStatus('ready', 'Good try! The word is "' + currentWord + '"');
+        }
+        
+        // Record attempt
+        window.progressTracker.recordAttempt(currentWord, isCorrect);
+        
+        // Update score
+        if (isCorrect) {
+            this.score += 10;
+            this.starsEarned += 1;
+            this.showMicroCelebration('word');
+        }
+        
+        // Show feedback and move to next word
+        setTimeout(() => {
+            this.showReadingFeedback(isCorrect, currentWord, recognizedText);
+        }, 2000);
+        
+        // Move to next word after feedback
+        setTimeout(() => {
+            this.nextWord();
+        }, 4000);
+    }
+
+    displayRecognizedText(text, isCorrect) {
+        const recognizedDiv = document.getElementById('recognized-text');
+        recognizedDiv.textContent = `I heard: "${text}"`;
+        recognizedDiv.className = `recognized-text ${isCorrect ? 'correct' : 'incorrect'}`;
+    }
+
+    clearRecognizedText() {
+        const recognizedDiv = document.getElementById('recognized-text');
+        recognizedDiv.textContent = '';
+        recognizedDiv.className = 'recognized-text';
+    }
+
+    showReadingFeedback(isCorrect, correctWord, recognizedText) {
+        const feedbackArea = document.getElementById('feedback-area');
+        const feedbackMessage = document.getElementById('feedback-message');
+        
+        if (isCorrect) {
+            feedbackMessage.innerHTML = `
+                <div class="feedback-text">Perfect! I heard you say "${recognizedText}" and you got it right! 🎉</div>
+                <div class="feedback-sentence">${this.wordStories[this.wordList[this.currentWordIndex]]}</div>
+            `;
+            feedbackMessage.className = 'feedback-message correct';
+            this.showCelebration();
+        } else {
+            feedbackMessage.innerHTML = `
+                <div class="feedback-text">Good try! I heard you say "${recognizedText}" but the word is "${correctWord}"</div>
+                <div class="feedback-sentence">${this.wordStories[this.wordList[this.currentWordIndex]]}</div>
+            `;
+            feedbackMessage.className = 'feedback-message incorrect';
+        }
+        
+        feedbackArea.style.display = 'block';
+        
+        // Speak feedback
+        if (isCorrect) {
+            window.audioController.speakEncouragement().then(() => {
+                return window.audioController.speak(this.wordStories[this.wordList[this.currentWordIndex]], {
+                    rate: 0.8,
+                    pitch: 1.0,
+                    volume: 0.8
+                });
+            });
+        } else {
+            window.audioController.speak(`Good try! I heard you say ${recognizedText} but the word is ${correctWord}`, {
+                rate: 0.8,
+                pitch: 1.0,
+                volume: 0.8
+            }).then(() => {
+                return window.audioController.speak(this.wordStories[this.wordList[this.currentWordIndex]], {
+                    rate: 0.8,
+                    pitch: 1.0,
+                    volume: 0.8
+                });
+            });
+        }
+    }
+
+    resetReadingUI() {
+        this.updateRecordingStatus('', '');
+        this.updateRecordButton(false);
+        this.clearRecognizedText();
+        this.hideLiveTranscription();
+    }
+
+    updateLiveTranscription(text) {
+        const liveTranscriptionDiv = document.getElementById('live-transcription');
+        if (text) {
+            liveTranscriptionDiv.textContent = `Listening: "${text}"`;
+            liveTranscriptionDiv.classList.add('active');
+        } else {
+            liveTranscriptionDiv.textContent = '';
+            liveTranscriptionDiv.classList.remove('active');
+        }
+    }
+
+    showLiveTranscription() {
+        const liveTranscriptionDiv = document.getElementById('live-transcription');
+        liveTranscriptionDiv.style.display = 'block';
+        liveTranscriptionDiv.textContent = 'Listening...';
+        liveTranscriptionDiv.classList.add('active');
+    }
+
+    hideLiveTranscription() {
+        const liveTranscriptionDiv = document.getElementById('live-transcription');
+        liveTranscriptionDiv.style.display = 'none';
+        liveTranscriptionDiv.classList.remove('active');
+    }
+
+    updateRecordingStatus(type, message) {
+        const statusDiv = document.getElementById('recording-status');
+        statusDiv.className = `recording-status ${type}`;
+        statusDiv.textContent = message;
+    }
+
+    updateRecordButton(listening) {
+        const recordBtn = document.getElementById('record-button');
+        const recordText = recordBtn.querySelector('.record-text');
+        
+        if (listening) {
+            recordBtn.classList.add('recording');
+            recordText.textContent = 'Click to Stop';
+        } else {
+            recordBtn.classList.remove('recording');
+            recordText.textContent = 'Click to Say the Word';
+        }
+    }
+
+    loadCurrentWord() {
+        if (this.currentWordIndex >= this.wordList.length) {
+            this.endGame();
+            return;
+        }
+
+        const currentWord = this.wordList[this.currentWordIndex];
+        
+        // Update word displays with enhanced visual elements
+        document.querySelectorAll('#scramble-word-display').forEach(el => {
+            // Don't show sentence in scramble game - kids could copy the word
+            el.innerHTML = `
+                <div class="word-display-enhanced">
+                    <span class="word-text">Click the speaker button to hear the word</span>
+                </div>
+            `;
+        });
+
+        // Update spelling and multiple choice displays without sentences
+        document.querySelectorAll('#current-word-display, #mc-word-display').forEach(el => {
+            el.innerHTML = `
+                <div class="word-display-enhanced">
+                    <span class="word-text">Click the speaker button to hear the word</span>
+                </div>
+            `;
+        });
+
+        // Special handling for flash card - show the actual word on front
+        const flashWordDisplay = document.getElementById('flash-word-display');
+        if (flashWordDisplay && currentWord) {
+            flashWordDisplay.innerHTML = `
+                <div class="word-display-enhanced">
+                    <span class="word-text">${currentWord}</span>
+                </div>
+            `;
+        }
+
+        // Special handling for reading practice - show the actual word
+        const readingWordDisplay = document.getElementById('reading-word-display');
+        if (readingWordDisplay && currentWord) {
+            readingWordDisplay.innerHTML = `
+                <div class="word-display-enhanced">
+                    <span class="word-text">${currentWord}</span>
+                </div>
+            `;
+        }
+
+        // Update the spelling on the back of the flash card
+        const wordSpelling = document.getElementById('word-spelling');
+        if (wordSpelling && currentWord) {
+            wordSpelling.textContent = currentWord;
+        }
+
+        // Update progress
+        this.updateGameHeader();
+        
+        // Reset game state
+        this.clearFeedback();
+        
+        // Reset game-specific content for current game mode
+        if (this.currentGame === 'scramble') {
+            this.generateScrambledLetters();
+        } else if (this.currentGame === 'spelling') {
+            // Clear the input field for spelling challenge
+            const input = document.getElementById('word-input');
+            if (input) {
+                input.value = '';
+                input.disabled = false;
+                input.style.opacity = '1';
+                input.style.cursor = 'text';
+            }
+            
+            // Reset the check button
+            const checkBtn = document.getElementById('check-spelling');
+            if (checkBtn) {
+                checkBtn.disabled = true;
+                checkBtn.style.opacity = '0.5';
+                checkBtn.style.cursor = 'not-allowed';
+                checkBtn.textContent = 'Check';
+            }
+        } else if (this.currentGame === 'multiple-choice') {
+            // Regenerate multiple choice options and re-attach event listeners
+            this.setupMultipleChoiceGame();
+        } else if (this.currentGame === 'reading-practice') {
+            // Reset reading practice UI
+            this.resetReadingUI();
+        }
+    }
+
+    speakCurrentWord() {
+        if (!this.isGameActive || this.currentWordIndex >= this.wordList.length) return;
+        
+        const currentWord = this.wordList[this.currentWordIndex];
+        window.audioController.speakWord(currentWord);
+    }
+
+    // Spelling Game Methods
+    checkSpellingAnswer() {
+        const input = document.getElementById('word-input');
+        if (!input) return;
+        
+        const userAnswer = input.value.trim().toLowerCase();
+        const correctWord = this.wordList[this.currentWordIndex].toLowerCase();
+        
+        const isCorrect = userAnswer === correctWord;
+        this.handleAnswer(isCorrect, correctWord, userAnswer);
+    }
+
+    // Scramble Game Methods
+    generateScrambledLetters() {
+        const currentWord = this.wordList[this.currentWordIndex];
+        const letters = currentWord.split('');
+        
+        // Shuffle letters
+        for (let i = letters.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [letters[i], letters[j]] = [letters[j], letters[i]];
+        }
+
+        const letterBank = document.getElementById('letter-bank');
+        const wordSlot = document.getElementById('word-slot');
+        
+        // Clear existing content
+        letterBank.innerHTML = '';
+        wordSlot.innerHTML = '';
+        
+        // Create letter tiles - each letter appears exactly once
+        letters.forEach((letter, index) => {
+            const tile = document.createElement('div');
+            tile.className = 'letter-tile';
+            tile.textContent = letter.toUpperCase();
+            tile.draggable = true;
+            tile.dataset.letter = letter.toLowerCase();
+            tile.dataset.originalIndex = index; // Track original position
+            letterBank.appendChild(tile);
+        });
+
+        // Create word slots - exactly the number of letters in the word
+        for (let i = 0; i < currentWord.length; i++) {
+            const slot = document.createElement('div');
+            slot.className = 'slot';
+            slot.dataset.position = i;
+            wordSlot.appendChild(slot);
+        }
+    }
+
+    setupDragAndDrop() {
+        const letterBank = document.getElementById('letter-bank');
+        const wordSlot = document.getElementById('word-slot');
+        let draggedTile = null;
+
+        // Letter tiles
+        letterBank.addEventListener('dragstart', (e) => {
+            if (e.target.classList.contains('letter-tile')) {
+                draggedTile = e.target;
+                e.target.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', e.target.dataset.letter);
+            }
+        });
+
+        letterBank.addEventListener('dragend', (e) => {
+            e.target.classList.remove('dragging');
+            draggedTile = null;
+        });
+
+        // Word slots
+        wordSlot.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+
+        wordSlot.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const letter = e.dataTransfer.getData('text/plain');
+            const slot = e.target.closest('.slot');
+            
+            if (slot && draggedTile) {
+                // If slot already has a tile, move it back to bank
+                if (slot.hasChildNodes()) {
+                    const existingTile = slot.querySelector('.letter-tile');
+                    if (existingTile) {
+                        letterBank.appendChild(existingTile);
+                        slot.classList.remove('filled');
+                    }
+                }
+                
+                // Check if we already have this letter in another slot
+                const existingSlots = wordSlot.querySelectorAll('.slot.filled');
+                let canPlace = true;
+                
+                existingSlots.forEach(existingSlot => {
+                    const existingLetter = existingSlot.querySelector('.letter-tile')?.dataset.letter;
+                    if (existingLetter === letter) {
+                        canPlace = false;
+                    }
+                });
+                
+                if (canPlace) {
+                    // Move the dragged tile to the slot
+                    slot.appendChild(draggedTile);
+                    slot.classList.add('filled');
+                    draggedTile.classList.remove('dragging');
+                } else {
+                    // If letter already exists, move the dragged tile back to bank
+                    letterBank.appendChild(draggedTile);
+                    draggedTile.classList.remove('dragging');
+                }
+            }
+        });
+
+        // Allow dragging tiles back from slots to bank
+        wordSlot.addEventListener('dragstart', (e) => {
+            if (e.target.classList.contains('letter-tile')) {
+                draggedTile = e.target;
+                e.target.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', e.target.dataset.letter);
+            }
+        });
+
+        wordSlot.addEventListener('dragend', (e) => {
+            e.target.classList.remove('dragging');
+            draggedTile = null;
+        });
+
+        // Allow dropping tiles back to bank
+        letterBank.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+
+        letterBank.addEventListener('drop', (e) => {
+            e.preventDefault();
+            
+            if (draggedTile) {
+                // Move the dragged tile back to bank
+                letterBank.appendChild(draggedTile);
+                draggedTile.classList.remove('dragging');
+                
+                // Remove filled class from the slot it came from
+                const slot = draggedTile.closest('.slot');
+                if (slot) {
+                    slot.classList.remove('filled');
+                }
+            }
+        });
+
+        // Touch support
+        this.setupTouchSupport();
+    }
+
+    setupTouchSupport() {
+        let draggedElement = null;
+        let startX = 0;
+        let startY = 0;
+        let isDragging = false;
+        
+        // Touch start - begin drag
+        document.addEventListener('touchstart', (e) => {
+            if (e.target.classList.contains('letter-tile')) {
+                draggedElement = e.target;
+                const touch = e.touches[0];
+                startX = touch.clientX;
+                startY = touch.clientY;
+                isDragging = false;
+                
+                // Add visual feedback
+                draggedElement.style.opacity = '0.7';
+                draggedElement.style.transform = 'scale(1.1)';
+                draggedElement.style.zIndex = '1000';
+                
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Touch move - handle drag
+        document.addEventListener('touchmove', (e) => {
+            if (draggedElement) {
+                const touch = e.touches[0];
+                const deltaX = Math.abs(touch.clientX - startX);
+                const deltaY = Math.abs(touch.clientY - startY);
+                
+                // Start dragging if moved more than 10px
+                if (deltaX > 10 || deltaY > 10) {
+                    isDragging = true;
+                    draggedElement.style.position = 'fixed';
+                    draggedElement.style.left = (touch.clientX - 25) + 'px';
+                    draggedElement.style.top = (touch.clientY - 25) + 'px';
+                    draggedElement.style.pointerEvents = 'none';
+                }
+                
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Touch end - complete drop
+        document.addEventListener('touchend', (e) => {
+            if (draggedElement) {
+                const touch = e.changedTouches[0];
+                const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+                const slot = elementBelow?.closest('.slot');
+                const letterBank = document.getElementById('letter-bank');
+                const wordSlot = document.getElementById('word-slot');
+                
+                // Reset visual state
+                draggedElement.style.opacity = '';
+                draggedElement.style.transform = '';
+                draggedElement.style.zIndex = '';
+                draggedElement.style.position = '';
+                draggedElement.style.left = '';
+                draggedElement.style.top = '';
+                draggedElement.style.pointerEvents = '';
+                
+                if (isDragging && slot) {
+                    const letter = draggedElement.dataset.letter;
+                    
+                    // If slot already has a tile, move it back to bank
+                    if (slot.hasChildNodes()) {
+                        const existingTile = slot.querySelector('.letter-tile');
+                        if (existingTile) {
+                            letterBank.appendChild(existingTile);
+                            slot.classList.remove('filled');
+                        }
+                    }
+                    
+                    // Check if we already have this letter in another slot
+                    const existingSlots = wordSlot.querySelectorAll('.slot.filled');
+                    let canPlace = true;
+                    
+                    existingSlots.forEach(existingSlot => {
+                        const existingLetter = existingSlot.querySelector('.letter-tile')?.dataset.letter;
+                        if (existingLetter === letter) {
+                            canPlace = false;
+                        }
+                    });
+                    
+                    if (canPlace) {
+                        // Move the dragged tile to the slot
+                        slot.appendChild(draggedElement);
+                        slot.classList.add('filled');
+                    } else {
+                        // Move back to bank if duplicate
+                        letterBank.appendChild(draggedElement);
+                    }
+                } else if (isDragging && letterBank.contains(elementBelow)) {
+                    // Dropped back to bank
+                    letterBank.appendChild(draggedElement);
+                    
+                    // Remove filled class from any slot it came from
+                    const slot = draggedElement.closest('.slot');
+                    if (slot) {
+                        slot.classList.remove('filled');
+                    }
+                }
+                
+                draggedElement = null;
+                isDragging = false;
+            }
+        }, { passive: false });
+
+        // Handle clicks on letter tiles for mobile (fallback)
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('letter-tile') && !isDragging) {
+                const letterBank = document.getElementById('letter-bank');
+                const wordSlot = document.getElementById('word-slot');
+                const slots = wordSlot.querySelectorAll('.slot');
+                
+                // Find first empty slot
+                let emptySlot = null;
+                for (const slot of slots) {
+                    if (!slot.hasChildNodes()) {
+                        emptySlot = slot;
+                        break;
+                    }
+                }
+                
+                if (emptySlot) {
+                    const letter = e.target.dataset.letter;
+                    
+                    // Check if we already have this letter in another slot
+                    const existingSlots = wordSlot.querySelectorAll('.slot.filled');
+                    let canPlace = true;
+                    
+                    existingSlots.forEach(existingSlot => {
+                        const existingLetter = existingSlot.querySelector('.letter-tile')?.dataset.letter;
+                        if (existingLetter === letter) {
+                            canPlace = false;
+                        }
+                    });
+                    
+                    if (canPlace) {
+                        // Move tile to empty slot
+                        emptySlot.appendChild(e.target);
+                        emptySlot.classList.add('filled');
+                    }
+                }
+            }
+        });
+    }
+
+
+    checkScrambleAnswer() {
+        const wordSlot = document.getElementById('word-slot');
+        const slots = Array.from(wordSlot.children);
+        const userAnswer = slots.map(slot => {
+            const tile = slot.querySelector('.letter-tile');
+            return tile ? tile.dataset.letter : '';
+        }).join('');
+        
+        const correctWord = this.wordList[this.currentWordIndex].toLowerCase();
+        const isCorrect = userAnswer === correctWord;
+        
+        this.handleAnswer(isCorrect, correctWord);
+    }
+
+    // Multiple Choice Methods
+    generateMultipleChoiceOptions() {
+        const currentWord = this.wordList[this.currentWordIndex];
+        
+        // Safety check
+        if (!currentWord) {
+            console.error('Current word is undefined:', {
+                wordList: this.wordList,
+                currentWordIndex: this.currentWordIndex,
+                wordListLength: this.wordList?.length
+            });
+            return;
+        }
+        
+        const choices = [currentWord];
+        
+        // Add distractor words
+        const distractors = this.distractorWords.filter(word => 
+            word.length === currentWord.length && word !== currentWord
+        );
+        
+        // Shuffle and take 2-3 distractors
+        const shuffledDistractors = distractors.sort(() => Math.random() - 0.5);
+        choices.push(...shuffledDistractors.slice(0, 3));
+        
+        // Shuffle all choices
+        const shuffledChoices = choices.sort(() => Math.random() - 0.5);
+        
+        const choiceArea = document.getElementById('choice-options');
+        choiceArea.innerHTML = '';
+        
+        shuffledChoices.forEach(choice => {
+            const option = document.createElement('div');
+            option.className = 'choice-option';
+            option.textContent = choice;
+            choiceArea.appendChild(option);
+        });
+    }
+
+    selectMultipleChoice(selectedWord) {
+        const correctWord = this.wordList[this.currentWordIndex];
+        const isCorrect = selectedWord === correctWord;
+        
+        // Highlight selected option
+        document.querySelectorAll('.choice-option').forEach(option => {
+            option.classList.remove('selected');
+            if (option.textContent === selectedWord) {
+                option.classList.add('selected');
+            }
+        });
+        
+        // Handle answer with user's selection
+        this.handleAnswer(isCorrect, correctWord, selectedWord);
+    }
+
+    // Flash Cards Methods
+    flipFlashCard() {
+        const card = document.getElementById('flash-card');
+        const wordSpelling = document.getElementById('word-spelling');
+        
+        card.classList.add('flipped');
+        wordSpelling.textContent = this.wordList[this.currentWordIndex];
+        
+        // Only explain the purpose on the first flash card flip
+        if (this.isFirstFlashCard) {
+            window.audioController.speak("Look at the word and listen to help you remember it. The word is " + this.wordList[this.currentWordIndex], {
+                rate: 0.8,
+                pitch: 1.0,
+                volume: 0.8
+            }).then(() => {
+                // After explaining and showing the spelling, automatically move to next word
+                setTimeout(() => {
+                    this.nextWord();
+                }, 1000); // Short delay after audio finishes
+            });
+            this.isFirstFlashCard = false; // Mark that we've shown the instruction
+        } else {
+            // For subsequent cards, just speak the word and move on
+            window.audioController.speakWord(this.wordList[this.currentWordIndex]).then(() => {
+                setTimeout(() => {
+                    this.nextWord();
+                }, 1000);
+            });
+        }
+    }
+
+    // Answer Handling
+    handleAnswer(isCorrect, correctWord, userWord = null) {
+        const currentWord = this.wordList[this.currentWordIndex];
+        
+        // Record attempt
+        window.progressTracker.recordAttempt(currentWord, isCorrect);
+        
+        // Update score and consecutive correct tracking
+        if (isCorrect) {
+            this.score += 10;
+            this.starsEarned += 1;
+            this.consecutiveCorrect[currentWord] = (this.consecutiveCorrect[currentWord] || 0) + 1;
+            
+            // Show micro-celebration
+            this.showMicroCelebration('word');
+            
+            // Check for achievements
+            this.checkAchievements();
+        } else {
+            // Reset consecutive count for this word
+            this.consecutiveCorrect[currentWord] = 0;
+        }
+        
+        // Show feedback
+        this.showFeedback(isCorrect, correctWord);
+        
+        // Determine context based on current game mode
+        let context = 'typed'; // default for spelling game
+        if (this.currentGame === 'multiple-choice') {
+            context = 'selected';
+        } else if (this.currentGame === 'scramble') {
+            context = 'arranged';
+        }
+        
+        // Speak feedback and then move to next word
+        if (isCorrect) {
+            // Add highlighting for multiple choice during audio
+            if (this.currentGame === 'multiple-choice') {
+                this.highlightSelectedChoice(true);
+            }
+            
+            window.audioController.speakEncouragement().then(() => {
+                // Read the sentence for context
+                return window.audioController.speak(this.wordStories[currentWord], {
+                    rate: 0.8,
+                    pitch: 1.0,
+                    volume: 0.8
+                });
+            }).then(() => {
+                // Remove highlighting after audio finishes
+                if (this.currentGame === 'multiple-choice') {
+                    this.highlightSelectedChoice(false);
+                }
+                setTimeout(() => {
+                    this.nextWord();
+                }, 1000);
+            });
+        } else {
+            // Add highlighting for multiple choice during audio
+            if (this.currentGame === 'multiple-choice') {
+                this.highlightSelectedChoice(true);
+            }
+            
+            window.audioController.speakCorrection(correctWord, userWord, context).then(() => {
+                // Read the sentence for context
+                return window.audioController.speak(this.wordStories[currentWord], {
+                    rate: 0.8,
+                    pitch: 1.0,
+                    volume: 0.8
+                });
+            }).then(() => {
+                // Remove highlighting after audio finishes
+                if (this.currentGame === 'multiple-choice') {
+                    this.highlightSelectedChoice(false);
+                }
+                setTimeout(() => {
+                    this.nextWord();
+                }, 1000);
+            });
+        }
+    }
+
+    highlightSelectedChoice(highlight) {
+        const selectedOption = document.querySelector('.choice-option.selected');
+        if (selectedOption) {
+            if (highlight) {
+                selectedOption.classList.add('highlighted');
+            } else {
+                selectedOption.classList.remove('highlighted');
+            }
+        }
+    }
+
+    showFeedback(isCorrect, correctWord) {
+        const feedbackArea = document.getElementById('feedback-area');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const currentWord = this.wordList[this.currentWordIndex];
+        
+        if (isCorrect) {
+            feedbackMessage.innerHTML = `
+                <div class="feedback-text">Correct! 🎉</div>
+                <div class="feedback-sentence">${this.wordStories[currentWord]}</div>
+            `;
+            feedbackMessage.className = 'feedback-message correct';
+            this.showCelebration();
+        } else {
+            feedbackMessage.innerHTML = `
+                <div class="feedback-text">Not quite. The correct spelling is "${correctWord}"</div>
+                <div class="feedback-sentence">${this.wordStories[currentWord]}</div>
+            `;
+            feedbackMessage.className = 'feedback-message incorrect';
+        }
+        
+        feedbackArea.style.display = 'block';
+    }
+
+    clearFeedback() {
+        const feedbackArea = document.getElementById('feedback-area');
+        const feedbackMessage = document.getElementById('feedback-message');
+        
+        feedbackArea.style.display = 'none';
+        feedbackMessage.textContent = '';
+        feedbackMessage.className = 'feedback-message';
+        
+        // Clear celebration
+        const celebration = document.getElementById('celebration');
+        celebration.innerHTML = '';
+    }
+
+    nextWord() {
+        this.currentWordIndex++;
+        this.clearFeedback();
+        
+        // Reset button states for all game modes
+        this.resetScrambleCheckButton();
+        
+        if (this.currentWordIndex >= this.wordList.length) {
+            this.endGame();
+        } else {
+            this.loadCurrentWord();
+            // Automatically speak the next word
+            setTimeout(() => {
+                this.speakCurrentWord();
+            }, 500);
+        }
+    }
+
+    endGame() {
+        this.isGameActive = false;
+        
+        // End progress tracking session
+        const sessionSummary = window.progressTracker.endSession();
+        
+        // Show results
+        this.showResults(sessionSummary);
+    }
+
+    showResults(sessionSummary) {
+        this.showScreen('results');
+        
+        // Update result stats
+        document.getElementById('final-score').textContent = this.score;
+        document.getElementById('final-accuracy').textContent = `${Math.round(sessionSummary.accuracy * 100)}%`;
+        document.getElementById('words-completed').textContent = sessionSummary.wordsAttempted.length;
+        
+        // Show word-by-word results
+        this.displayWordResults();
+    }
+
+    displayWordResults() {
+        const wordResults = document.getElementById('word-results');
+        wordResults.innerHTML = '<h3>Word Results:</h3>';
+        
+        this.wordList.forEach(word => {
+            const stats = window.progressTracker.getWordStats(word);
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'word-result';
+            
+            const accuracyClass = stats.accuracy >= 0.8 ? 'high' : 
+                                 stats.accuracy >= 0.6 ? 'medium' : 'low';
+            
+            resultDiv.innerHTML = `
+                <span class="word">${word}</span>
+                <span class="accuracy ${accuracyClass}">${Math.round(stats.accuracy * 100)}%</span>
+            `;
+            
+            wordResults.appendChild(resultDiv);
+        });
+    }
+
+    updateGameHeader() {
+        document.getElementById('game-title').textContent = this.getGameTitle();
+        document.getElementById('current-word').textContent = `Word ${this.currentWordIndex + 1} of ${this.wordList.length}`;
+        document.getElementById('score').textContent = `Score: ${this.score}`;
+        
+        const progressPercent = (this.currentWordIndex / this.wordList.length) * 100;
+        document.getElementById('session-progress').style.width = `${progressPercent}%`;
+    }
+
+    getGameTitle() {
+        const titles = {
+            'spelling': '✍️ Spelling Challenge',
+            'scramble': '🔤 Letter Scramble',
+            'multiple-choice': '🎯 Multiple Choice',
+            'flashcards': '⚡ Flash Cards',
+            'reading-practice': '🎤 Reading Practice'
+        };
+        return titles[this.currentGame] || 'Game';
+    }
+
+    showScreen(screenName) {
+        document.querySelectorAll('.screen').forEach(screen => {
+            screen.classList.remove('active');
+        });
+        
+        document.getElementById(`${screenName}-screen`).classList.add('active');
+        this.gameState = screenName;
+        
+        if (screenName === 'welcome') {
+            this.updateProgressDisplay();
+        }
+    }
+
+    updateProgressDisplay() {
+        window.progressTracker.updateProgressDisplay();
+    }
+
+    showProgressDetails() {
+        const stats = window.progressTracker.getAllStats();
+        alert(`Progress Details:\n\nTotal Attempts: ${stats.totalAttempts}\nOverall Accuracy: ${Math.round(stats.overallAccuracy * 100)}%\n\nWeak Words: ${window.progressTracker.getWeakWords().join(', ') || 'None!'}`);
+    }
+
+    showCelebration() {
+        this.createConfetti();
+    }
+
+    createConfetti() {
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        const confettiPieces = [];
+        const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57'];
+        
+        // Create confetti pieces
+        for (let i = 0; i < 50; i++) {
+            confettiPieces.push({
+                x: Math.random() * canvas.width,
+                y: -10,
+                vx: (Math.random() - 0.5) * 4,
+                vy: Math.random() * 3 + 2,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                size: Math.random() * 8 + 4,
+                rotation: Math.random() * 360,
+                rotationSpeed: (Math.random() - 0.5) * 10
+            });
+        }
+        
+        // Animate confetti
+        const animate = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            confettiPieces.forEach((piece, index) => {
+                piece.x += piece.vx;
+                piece.y += piece.vy;
+                piece.rotation += piece.rotationSpeed;
+                
+                ctx.save();
+                ctx.translate(piece.x, piece.y);
+                ctx.rotate(piece.rotation * Math.PI / 180);
+                ctx.fillStyle = piece.color;
+                ctx.fillRect(-piece.size/2, -piece.size/2, piece.size, piece.size);
+                ctx.restore();
+                
+                // Remove pieces that are off screen
+                if (piece.y > canvas.height + 10) {
+                    confettiPieces.splice(index, 1);
+                }
+            });
+            
+            if (confettiPieces.length > 0) {
+                requestAnimationFrame(animate);
+            } else {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        };
+        
+        animate();
+    }
+}
+
+// Initialize game when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    window.sightWordsGame = new SightWordsGame();
+});
+
+// Export for use in other modules
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = SightWordsGame;
+}

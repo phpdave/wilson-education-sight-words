@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sight Words Game</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="screen active">
+            <div class="container">
+                <h1>🌟 Sight Words Practice 🌟</h1>
+                <p class="subtitle">Let's practice spelling these important words!</p>
+                
+                <div class="word-list">
+                    <h3>Words to Practice:</h3>
+                    <div class="word-tags">
+                        <span class="word-tag">are</span>
+                        <span class="word-tag">does</span>
+                        <span class="word-tag">from</span>
+                        <span class="word-tag">both</span>
+                        <span class="word-tag">of</span>
+                        <span class="word-tag">your</span>
+                        <span class="word-tag">want</span>
+                    </div>
+                </div>
+
+                <div class="game-selection">
+                    <h3>Choose Your Game:</h3>
+                    <div class="game-buttons">
+                        <button class="game-btn" data-game="spelling">
+                            <span class="icon">✍️</span>
+                            <span class="label">Spelling Challenge</span>
+                            <span class="desc">Type the word you hear</span>
+                        </button>
+                        <button class="game-btn" data-game="scramble">
+                            <span class="icon">🔤</span>
+                            <span class="label">Letter Scramble</span>
+                            <span class="desc">Arrange the letters</span>
+                        </button>
+                        <button class="game-btn" data-game="multiple-choice">
+                            <span class="icon">🎯</span>
+                            <span class="label">Multiple Choice</span>
+                            <span class="desc">Pick the right spelling</span>
+                        </button>
+                        <button class="game-btn" data-game="flashcards">
+                            <span class="icon">⚡</span>
+                            <span class="label">Flash Cards</span>
+                            <span class="desc">Quick recognition</span>
+                        </button>
+                        <button class="game-btn" data-game="reading-practice">
+                            <span class="icon">🎤</span>
+                            <span class="label">Reading Practice</span>
+                            <span class="desc">Read and say the word</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="progress-summary">
+                    <h3>Your Progress:</h3>
+                    <div id="progress-overview">
+                        <div class="progress-stats">
+                            <div class="stat">
+                                <span class="stat-number" id="total-attempts">0</span>
+                                <span class="stat-label">Total Attempts</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-number" id="accuracy-rate">0%</span>
+                                <span class="stat-label">Accuracy</span>
+                            </div>
+                        </div>
+                        <div class="weak-words" id="weak-words-display">
+                            <p>Keep practicing all words! 🎉</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <div class="container">
+                <div class="game-header">
+                    <button id="back-btn" class="back-btn">← Back</button>
+                    <div class="game-info">
+                        <h2 id="game-title">Game Title</h2>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="session-progress"></div>
+                        </div>
+                        <div class="session-stats">
+                            <span id="current-word">Word 1 of 10</span>
+                            <span id="score">Score: 0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game-content">
+                    <!-- Spelling Game -->
+                    <div id="spelling-game" class="game-mode">
+                        <div class="word-display">
+                            <div class="word-audio">
+                                <button id="speak-word" class="speak-btn">🔊</button>
+                                <span id="current-word-display">Click to hear the word</span>
+                            </div>
+                        </div>
+                        <div class="input-area">
+                            <input type="text" id="word-input" placeholder="Type the word here..." autocomplete="off">
+                            <button id="check-spelling" class="check-btn">Check</button>
+                        </div>
+                    </div>
+
+                    <!-- Letter Scramble Game -->
+                    <div id="scramble-game" class="game-mode">
+                        <div class="word-display">
+                            <div class="word-audio">
+                                <button id="speak-scramble" class="speak-btn">🔊</button>
+                                <span id="scramble-word-display">Click to hear the word</span>
+                            </div>
+                        </div>
+                        <div class="letter-area">
+                            <div class="letter-bank" id="letter-bank"></div>
+                            <div class="word-slot" id="word-slot"></div>
+                        </div>
+                        <div class="scramble-controls">
+                            <button id="check-scramble" class="check-btn">Check</button>
+                        </div>
+                    </div>
+
+                    <!-- Multiple Choice Game -->
+                    <div id="multiple-choice-game" class="game-mode">
+                        <div class="word-display">
+                            <div class="word-audio">
+                                <button id="speak-mc" class="speak-btn">🔊</button>
+                                <span id="mc-word-display">Click to hear the word</span>
+                            </div>
+                        </div>
+                        <div class="choice-area">
+                            <div class="choices" id="choice-options"></div>
+                        </div>
+                    </div>
+
+                    <!-- Flash Cards Game -->
+                    <div id="flashcards-game" class="game-mode">
+                        <div class="card-container">
+                            <div class="flash-card" id="flash-card">
+                                <div class="card-front">
+                                    <div class="word-audio">
+                                        <button id="speak-flash" class="speak-btn">🔊</button>
+                                        <span id="flash-word-display">Click to hear the word</span>
+                                    </div>
+                                </div>
+                                <div class="card-back">
+                                    <div class="word-spelling" id="word-spelling"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flash-controls">
+                            <button id="flip-card" class="flip-btn">Show Next Card</button>
+                        </div>
+                    </div>
+
+                    <!-- Reading Practice Game -->
+                    <div id="reading-practice-game" class="game-mode">
+                        <div class="word-display">
+                            <div class="word-audio">
+                                <button id="speak-reading" class="speak-btn">🔊</button>
+                                <span id="reading-word-display">Click to hear the word</span>
+                            </div>
+                        </div>
+                        <div class="reading-instructions">
+                            <h3>🎤 Say the word out loud!</h3>
+                            <p>Look at the word above and say it clearly into your microphone.</p>
+                        </div>
+                        <div class="recording-area">
+                            <button id="record-button" class="record-btn">
+                                <span class="record-icon">🎤</span>
+                                <span class="record-text">Click to Say the Word</span>
+                            </button>
+                            <div class="recording-status" id="recording-status"></div>
+                            <div class="live-transcription" id="live-transcription"></div>
+                            <div class="recognized-text" id="recognized-text"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="feedback-area" id="feedback-area">
+                    <div class="feedback-message" id="feedback-message"></div>
+                    <div class="celebration" id="celebration"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="results-screen" class="screen">
+            <div class="container">
+                <h2>🎉 Great Job! 🎉</h2>
+                <div class="results-summary">
+                    <div class="final-stats">
+                        <div class="stat-card">
+                            <span class="stat-number" id="final-score">0</span>
+                            <span class="stat-label">Final Score</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number" id="final-accuracy">0%</span>
+                            <span class="stat-label">Accuracy</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number" id="words-completed">0</span>
+                            <span class="stat-label">Words Completed</span>
+                        </div>
+                    </div>
+                    
+                    <div class="word-results" id="word-results"></div>
+                    
+                    <div class="action-buttons">
+                        <button id="play-again" class="action-btn primary">Play Again</button>
+                        <button id="change-game" class="action-btn secondary">Try Different Game</button>
+                        <button id="view-progress" class="action-btn secondary">View Progress</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Parent Dashboard Screen -->
+        <div id="parent-dashboard" class="screen">
+            <div class="container">
+                <div class="dashboard-header">
+                    <button id="dashboard-back-btn" class="back-btn">← Back</button>
+                    <h2>📊 Learning Dashboard</h2>
+                </div>
+                
+                <div class="dashboard-content">
+                    <!-- Learning Insights -->
+                    <div class="dashboard-section">
+                        <h3>🎯 Learning Insights</h3>
+                        <div class="insights-grid">
+                            <div class="insight-card">
+                                <div class="insight-icon">🌟</div>
+                                <div class="insight-title">Strongest Words</div>
+                                <div class="insight-value" id="strongest-words">Loading...</div>
+                            </div>
+                            <div class="insight-card">
+                                <div class="insight-icon">🎯</div>
+                                <div class="insight-title">Focus Areas</div>
+                                <div class="insight-value" id="focus-areas">Loading...</div>
+                            </div>
+                            <div class="insight-card">
+                                <div class="insight-icon">📈</div>
+                                <div class="insight-title">Progress Trend</div>
+                                <div class="insight-value" id="progress-trend">Loading...</div>
+                            </div>
+                            <div class="insight-card">
+                                <div class="insight-icon">🎨</div>
+                                <div class="insight-title">Learning Style</div>
+                                <div class="insight-value" id="learning-style">Loading...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Analytics -->
+                    <div class="dashboard-section">
+                        <h3>📊 Detailed Progress</h3>
+                        <div class="word-progress-grid" id="word-progress-grid">
+                            <!-- Word progress cards will be generated here -->
+                        </div>
+                    </div>
+
+                    <!-- Recommendations -->
+                    <div class="dashboard-section">
+                        <h3>💡 Recommendations</h3>
+                        <div class="recommendations-list" id="recommendations-list">
+                            <!-- Recommendations will be generated here -->
+                        </div>
+                    </div>
+
+                    <!-- Session History -->
+                    <div class="dashboard-section">
+                        <h3>📅 Recent Sessions</h3>
+                        <div class="session-history" id="session-history">
+                            <!-- Session history will be generated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confetti Canvas -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <script src="audio.js"></script>
+    <script src="progress.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
