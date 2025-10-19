@@ -942,6 +942,13 @@ class SightWordsGame {
     }
 
     loadCurrentWord() {
+        // Check if we have a valid word list
+        if (!this.wordList || this.wordList.length === 0) {
+            console.error('No word list available');
+            this.endGame();
+            return;
+        }
+        
         if (this.currentWordIndex >= this.wordList.length) {
             this.endGame();
             return;
@@ -1031,7 +1038,8 @@ class SightWordsGame {
     }
 
     speakCurrentWord() {
-        if (!this.isGameActive || this.currentWordIndex >= this.wordList.length) return;
+        if (!this.isGameActive || !this.wordList || this.wordList.length === 0 || 
+            this.currentWordIndex >= this.wordList.length) return;
         
         const currentWord = this.wordList[this.currentWordIndex];
         window.audioController.speakWord(currentWord);
@@ -1042,6 +1050,20 @@ class SightWordsGame {
         const input = document.getElementById('word-input');
         if (!input) return;
         
+        // Check if game is active
+        if (!this.isGameActive) {
+            console.log('Game not active, ignoring checkSpellingAnswer call');
+            return;
+        }
+        
+        // Check if we have a valid word list and current word index
+        if (!this.wordList || this.wordList.length === 0 || 
+            this.currentWordIndex >= this.wordList.length || 
+            this.currentWordIndex < 0) {
+            console.error('Invalid word list or current word index');
+            return;
+        }
+        
         const userAnswer = input.value.trim().toLowerCase();
         const correctWord = this.wordList[this.currentWordIndex].toLowerCase();
         
@@ -1051,6 +1073,14 @@ class SightWordsGame {
 
     // Scramble Game Methods
     generateScrambledLetters() {
+        // Check if we have a valid word list and current word index
+        if (!this.wordList || this.wordList.length === 0 || 
+            this.currentWordIndex >= this.wordList.length || 
+            this.currentWordIndex < 0) {
+            console.error('Invalid word list or current word index');
+            return;
+        }
+        
         const currentWord = this.wordList[this.currentWordIndex];
         const letters = currentWord.split('');
         
@@ -1355,6 +1385,14 @@ class SightWordsGame {
 
     // Multiple Choice Methods
     generateMultipleChoiceOptions() {
+        // Check if we have a valid word list and current word index
+        if (!this.wordList || this.wordList.length === 0 || 
+            this.currentWordIndex >= this.wordList.length || 
+            this.currentWordIndex < 0) {
+            console.error('Invalid word list or current word index in generateMultipleChoiceOptions');
+            return;
+        }
+        
         const currentWord = this.wordList[this.currentWordIndex];
         
         // Safety check
@@ -1441,6 +1479,14 @@ class SightWordsGame {
 
     // Answer Handling
     handleAnswer(isCorrect, correctWord, userWord = null) {
+        // Check if we have a valid word list and current word index
+        if (!this.wordList || this.wordList.length === 0 || 
+            this.currentWordIndex >= this.wordList.length || 
+            this.currentWordIndex < 0) {
+            console.error('Invalid word list or current word index in handleAnswer');
+            return;
+        }
+        
         const currentWord = this.wordList[this.currentWordIndex];
         
         // Record attempt
