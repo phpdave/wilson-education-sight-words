@@ -425,7 +425,7 @@ class ProgressTracker {
                 weakWordsEl.innerHTML = `
                     <p><strong>Words needing practice:</strong></p>
                     <div class="weak-word-list">
-                        ${displayStats.weakWords.map(word => `<span class="weak-word-tag">${word}</span>`).join('')}
+                        ${displayStats.weakWords.map(word => `<span class="weak-word-tag">${word}</span>`).join(' ')}
                     </div>
                 `;
             } else {
