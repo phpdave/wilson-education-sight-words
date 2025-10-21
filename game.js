@@ -1512,7 +1512,23 @@ class SightWordsGame {
         const userAnswer = input.value.trim().toLowerCase();
         const correctWord = this.wordList[this.currentWordIndex].toLowerCase();
         
-        const isCorrect = userAnswer === correctWord;
+        // Check for exact match first, then homophones
+        let isCorrect = false;
+        
+        // First check for exact match
+        if (userAnswer === correctWord) {
+            isCorrect = true;
+        } else {
+            // Check if the user's answer matches any homophones of the correct word
+            const homophones = this.homophones[correctWord] || [];
+            for (const homophone of homophones) {
+                if (userAnswer === homophone.toLowerCase()) {
+                    isCorrect = true;
+                    console.log(`Matched homophone: ${homophone} for ${correctWord}`);
+                    break;
+                }
+            }
+        }
         this.handleAnswer(isCorrect, correctWord, userAnswer);
     }
 
@@ -1979,7 +1995,7 @@ class SightWordsGame {
         }
         
         // Show feedback
-        this.showFeedback(isCorrect, correctWord);
+        this.showFeedback(isCorrect, correctWord, userWord);
         
         // Determine context based on current game mode
         let context = 'typed'; // default for spelling game
@@ -2048,16 +2064,30 @@ class SightWordsGame {
         }
     }
 
-    showFeedback(isCorrect, correctWord) {
+    showFeedback(isCorrect, correctWord, userWord = null) {
         const feedbackArea = document.getElementById('feedback-area');
         const feedbackMessage = document.getElementById('feedback-message');
         const currentWord = this.wordList[this.currentWordIndex];
         
         if (isCorrect) {
-            feedbackMessage.innerHTML = `
-                <div class="feedback-text">Correct! 🎉</div>
-                <div class="feedback-sentence">${this.wordStories[currentWord]}</div>
-            `;
+            // Check if user wrote a homophone
+            const homophones = this.homophones[currentWord] || [];
+            const isHomophone = userWord && homophones.some(homophone => 
+                userWord.toLowerCase() === homophone.toLowerCase()
+            );
+            
+            if (isHomophone) {
+                feedbackMessage.innerHTML = `
+                    <div class="feedback-text">Great! "${userWord}" is correct too! 🎉</div>
+                    <div class="feedback-text">The word we're practicing is "${correctWord}"</div>
+                    <div class="feedback-sentence">${this.wordStories[currentWord]}</div>
+                `;
+            } else {
+                feedbackMessage.innerHTML = `
+                    <div class="feedback-text">Correct! 🎉</div>
+                    <div class="feedback-sentence">${this.wordStories[currentWord]}</div>
+                `;
+            }
             feedbackMessage.className = 'feedback-message correct';
             this.showCelebration();
         } else {
