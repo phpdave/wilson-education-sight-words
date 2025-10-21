@@ -956,6 +956,8 @@ class SightWordsGame {
             this.retryCount = 0;
             this.maxRetries = 2;
             this.speechRecognitionActive = false; // Track if recognition is active for the session
+            this.microphonePermissionGranted = false; // Track microphone permission state
+            this.microphonePermissionRequested = false; // Track if we've already requested permission
         }
 
         // Check if speech recognition is supported
@@ -974,6 +976,9 @@ class SightWordsGame {
                 this.speechRecognition.continuous = true;
                 this.speechRecognition.interimResults = true;
             }
+            
+            // Check microphone permission status
+            this.checkMicrophonePermission();
 
             this.speechRecognition.onstart = () => {
                 this.isListening = true;
@@ -1029,6 +1034,7 @@ class SightWordsGame {
                         errorMessage = 'Microphone not available. Please check your microphone and try again!';
                         break;
                     case 'not-allowed':
+                        this.microphonePermissionGranted = false;
                         errorMessage = 'Microphone access denied. Please allow microphone access and try again!';
                         break;
                     case 'network':
@@ -1076,8 +1082,14 @@ class SightWordsGame {
         // Record button event listener - now just toggles listening state
         newRecordBtn.addEventListener('click', () => {
             if (!this.speechRecognitionActive) {
-                // Start the speech recognition session
-                this.startSpeechRecognitionSession();
+                // Check microphone permission first
+                this.checkMicrophonePermission().then(() => {
+                    if (this.microphonePermissionGranted) {
+                        this.startSpeechRecognitionSession();
+                    } else {
+                        this.updateRecordingStatus('error', 'Microphone permission needed. Please allow access and try again.');
+                    }
+                });
             } else if (!this.isListening) {
                 // Start listening for current word
                 this.startListeningForWord();
@@ -1091,8 +1103,38 @@ class SightWordsGame {
         this.resetReadingUI();
     }
 
+    async checkMicrophonePermission() {
+        // If we already have permission, return immediately
+        if (this.microphonePermissionGranted) {
+            return Promise.resolve();
+        }
+
+        // If we've already requested permission and it was denied, don't ask again
+        if (this.microphonePermissionRequested && !this.microphonePermissionGranted) {
+            return Promise.reject('Permission already denied');
+        }
+
+        try {
+            // Request microphone permission using getUserMedia
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            this.microphonePermissionGranted = true;
+            this.microphonePermissionRequested = true;
+            
+            // Stop the stream immediately as we only needed it for permission
+            stream.getTracks().forEach(track => track.stop());
+            
+            console.log('Microphone permission granted');
+            return Promise.resolve();
+        } catch (error) {
+            console.error('Microphone permission denied:', error);
+            this.microphonePermissionGranted = false;
+            this.microphonePermissionRequested = true;
+            return Promise.reject(error);
+        }
+    }
+
     startSpeechRecognitionSession() {
-        if (this.speechRecognition && !this.speechRecognitionActive) {
+        if (this.speechRecognition && !this.speechRecognitionActive && this.microphonePermissionGranted) {
             this.speechRecognitionActive = true;
             this.recognizedText = '';
             this.clearRecognizedText();
@@ -1100,6 +1142,8 @@ class SightWordsGame {
             
             this.updateRecordingStatus('ready', 'Speech recognition started!');
             this.updateRecordButton(false);
+        } else if (!this.microphonePermissionGranted) {
+            this.updateRecordingStatus('error', 'Microphone permission needed. Please allow access and try again.');
         }
     }
 
@@ -1267,8 +1311,10 @@ class SightWordsGame {
     }
 
     resetReadingUI() {
-        if (this.speechRecognitionActive) {
+        if (this.speechRecognitionActive && this.microphonePermissionGranted) {
             this.updateRecordingStatus('ready', 'Ready!');
+        } else if (!this.microphonePermissionGranted && this.microphonePermissionRequested) {
+            this.updateRecordingStatus('error', 'Microphone permission needed');
         } else {
             this.updateRecordingStatus('', '');
         }
@@ -1425,9 +1471,11 @@ class SightWordsGame {
             // Reset reading practice UI
             this.resetReadingUI();
             // If speech recognition session is active, prepare for next word
-            if (this.speechRecognitionActive) {
+            if (this.speechRecognitionActive && this.microphonePermissionGranted) {
                 this.updateRecordingStatus('ready', 'Ready!');
                 this.updateRecordButton(false);
+            } else if (!this.microphonePermissionGranted && this.microphonePermissionRequested) {
+                this.updateRecordingStatus('error', 'Microphone permission needed');
             }
         }
     }
