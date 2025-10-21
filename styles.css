@@ -337,12 +337,13 @@ h1 {
 }
 
 #current-word-display, #scramble-word-display, #mc-word-display, #flash-word-display {
-    font-size: 1.5em;
+    font-size: 3em;
     font-weight: bold;
     color: #2d3748;
     min-height: 1.5em;
     display: flex;
     align-items: center;
+    justify-content: center;
 }
 
 /* Input Area */
@@ -636,6 +637,19 @@ h1 {
     align-items: center;
     margin-top: 40px;
     margin-bottom: 20px;
+}
+
+/* Reading Practice - Extra Large Word Display */
+#reading-practice-game #current-word-display {
+    font-size: 4em;
+    font-weight: 900;
+    color: #1a202c;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    margin: 20px 0;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .record-btn {
