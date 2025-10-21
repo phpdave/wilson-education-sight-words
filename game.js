@@ -11,21 +11,80 @@ class SightWordsGame {
         this.isGameActive = false;
         this.isFirstFlashCard = true; // Track if this is the first flash card flip
         
-        this.wordBank = ['are', 'does', 'from', 'both', 'of', 'your', 'want'];
+        this.wordBank = [
+            'her', 'who', 'some', 'out', 'about', 'too', 'two', 'were', 'what', 'come', 'comes', 'coming', 'become', 'becomes', 'becoming',
+            'their', 'no', 'so', 'also', 'how', 'now', 'where', 'here', 'there', 'any', 'anywhere', 'anyone', 'anything',
+            'many', 'front', 'very', 'every', 'everywhere', 'everyone', 'everything', 'could', 'would', 'should',
+            'when', 'which', 'been', 'said', 'each', 'asked', 'why', 'by', 'my', 'try', 'put', 'putting',
+            'only', 'work', 'word', 'world'
+        ];
         this.distractorWords = [
             'air', 'our', 'doze', 'dose', 'form', 'fro', 'boat', 'bath', 'off', 'if', 
-            'you', 'yore', 'went', 'wont', 'ant', 'and', 'the', 'is', 'it', 'in'
+            'you', 'yore', 'went', 'wont', 'ant', 'and', 'the', 'is', 'it', 'in',
+            'him', 'how', 'sum', 'oat', 'abut', 'to', 'toe', 'wear', 'whet', 'came',
+            'cums', 'cuming', 'becum', 'becums', 'becuming', 'thair', 'know', 'sow',
+            'allso', 'now', 'ware', 'hear', 'thare', 'eny', 'enywhere', 'enyone', 'enything',
+            'meny', 'frunt', 'vary', 'evry', 'evrywhere', 'evryone', 'evrything', 'cud',
+            'wud', 'shud', 'wen', 'wich', 'bean', 'sed', 'ech', 'askd', 'wy', 'bi',
+            'mi', 'tri', 'poot', 'pooting', 'onely', 'werk', 'werd', 'werld'
         ];
         
         // Enhanced learning features
         this.wordStories = {
-            'are': 'We are friends!',
-            'does': 'What does the cat do?',
-            'from': 'I come from home.',
-            'both': 'Both of us like ice cream!',
-            'of': 'A cup of milk.',
-            'your': 'Is this your toy?',
-            'want': 'I want to play!'
+            'her': 'Her name is Sarah.',
+            'who': 'Who is at the door?',
+            'some': 'I have some cookies.',
+            'out': 'Let\'s go out to play.',
+            'about': 'Tell me about your day.',
+            'too': 'I want to go too!',
+            'two': 'I have two cats.',
+            'were': 'We were happy yesterday.',
+            'what': 'What is your favorite color?',
+            'come': 'Come here, please.',
+            'comes': 'The bus comes at eight.',
+            'coming': 'The train is coming now.',
+            'become': 'I want to become a teacher.',
+            'becomes': 'She becomes happy when she sings.',
+            'becoming': 'The sky is becoming dark.',
+            'their': 'Their house is big.',
+            'no': 'No, thank you.',
+            'so': 'I am so excited!',
+            'also': 'I also like pizza.',
+            'how': 'How are you today?',
+            'now': 'We can play now.',
+            'where': 'Where is my book?',
+            'here': 'Come here, please.',
+            'there': 'The park is over there.',
+            'any': 'Do you have any questions?',
+            'anywhere': 'We can go anywhere you want.',
+            'anyone': 'Anyone can join the game.',
+            'anything': 'You can ask me anything.',
+            'many': 'There are many flowers.',
+            'front': 'The car is in front of the house.',
+            'very': 'This cake is very good.',
+            'every': 'Every day is special.',
+            'everywhere': 'We looked everywhere for the toy.',
+            'everyone': 'Everyone is welcome here.',
+            'everything': 'Everything will be okay.',
+            'could': 'Could you help me, please?',
+            'would': 'Would you like some juice?',
+            'should': 'You should eat your vegetables.',
+            'when': 'When is your birthday?',
+            'which': 'Which book do you want?',
+            'been': 'I have been waiting for you.',
+            'said': 'She said hello to me.',
+            'each': 'Each child gets a cookie.',
+            'asked': 'He asked a good question.',
+            'why': 'Why is the sky blue?',
+            'by': 'The book is by my bed.',
+            'my': 'My favorite color is blue.',
+            'try': 'Try your best!',
+            'put': 'Put the toy in the box.',
+            'putting': 'I am putting on my shoes.',
+            'only': 'Only five minutes left!',
+            'work': 'I work hard at school.',
+            'word': 'This is a new word.',
+            'world': 'The world is beautiful.'
         };
         this.consecutiveCorrect = {};
         this.requiredCorrectStreak = 3;
@@ -268,7 +327,22 @@ class SightWordsGame {
         this.setupEventListeners();
         this.setupGlobalTyping();
         this.updateProgressDisplay();
+        this.populateWordTags();
         this.showScreen('welcome');
+    }
+
+    populateWordTags() {
+        const container = document.getElementById('word-tags-container');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        this.wordBank.forEach(word => {
+            const tag = document.createElement('span');
+            tag.className = 'word-tag';
+            tag.textContent = word;
+            container.appendChild(tag);
+        });
     }
 
     setupGlobalTyping() {

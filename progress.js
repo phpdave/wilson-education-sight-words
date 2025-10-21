@@ -4,7 +4,13 @@
 class ProgressTracker {
     constructor() {
         this.storageKey = 'sight-words-progress';
-        this.wordBank = ['are', 'does', 'from', 'both', 'of', 'your', 'want'];
+        this.wordBank = [
+            'her', 'who', 'some', 'out', 'about', 'too', 'two', 'were', 'what', 'come', 'comes', 'coming', 'become', 'becomes', 'becoming',
+            'their', 'no', 'so', 'also', 'how', 'now', 'where', 'here', 'there', 'any', 'anywhere', 'anyone', 'anything',
+            'many', 'front', 'very', 'every', 'everywhere', 'everyone', 'everything', 'could', 'would', 'should',
+            'when', 'which', 'been', 'said', 'each', 'asked', 'why', 'by', 'my', 'try', 'put', 'putting',
+            'only', 'work', 'word', 'world'
+        ];
         this.progress = this.loadProgress();
         this.sessionStats = {
             startTime: null,
