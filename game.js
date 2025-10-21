@@ -86,6 +86,108 @@ class SightWordsGame {
             'word': 'This is a new word.',
             'world': 'The world is beautiful.'
         };
+        // Homophone mapping for Reading Practice
+        this.homophones = {
+            'too': ['two', 'to'],
+            'two': ['too', 'to'],
+            'to': ['too', 'two'],
+            'their': ['there', 'they\'re'],
+            'there': ['their', 'they\'re'],
+            'they\'re': ['their', 'there'],
+            'here': ['hear'],
+            'hear': ['here'],
+            'no': ['know'],
+            'know': ['no'],
+            'by': ['buy', 'bye'],
+            'buy': ['by', 'bye'],
+            'bye': ['by', 'buy'],
+            'some': ['sum'],
+            'sum': ['some'],
+            'so': ['sew'],
+            'sew': ['so'],
+            'put': ['putt'],
+            'putt': ['put'],
+            'word': ['were'],
+            'were': ['word'],
+            'work': ['were'],
+            'world': ['were'],
+            'where': ['were'],
+            'what': ['watt'],
+            'watt': ['what'],
+            'which': ['witch'],
+            'witch': ['which'],
+            'when': ['wen'],
+            'wen': ['when'],
+            'why': ['y'],
+            'y': ['why'],
+            'my': ['mi'],
+            'mi': ['my'],
+            'try': ['tri'],
+            'tri': ['try'],
+            'only': ['onely'],
+            'onely': ['only'],
+            'said': ['sed'],
+            'sed': ['said'],
+            'each': ['ech'],
+            'ech': ['each'],
+            'asked': ['askd'],
+            'askd': ['asked'],
+            'been': ['bean'],
+            'bean': ['been'],
+            'come': ['cum'],
+            'cum': ['come'],
+            'comes': ['cums'],
+            'cums': ['comes'],
+            'coming': ['cuming'],
+            'cuming': ['coming'],
+            'become': ['becum'],
+            'becum': ['become'],
+            'becomes': ['becums'],
+            'becums': ['becomes'],
+            'becoming': ['becuming'],
+            'becuming': ['becoming'],
+            'could': ['cud'],
+            'cud': ['could'],
+            'would': ['wud'],
+            'wud': ['would'],
+            'should': ['shud'],
+            'shud': ['should'],
+            'many': ['meny'],
+            'meny': ['many'],
+            'very': ['vary'],
+            'vary': ['very'],
+            'every': ['evry'],
+            'evry': ['every'],
+            'everywhere': ['evrywhere'],
+            'evrywhere': ['everywhere'],
+            'everyone': ['evryone'],
+            'evryone': ['everyone'],
+            'everything': ['evrything'],
+            'evrything': ['everything'],
+            'any': ['eny'],
+            'eny': ['any'],
+            'anywhere': ['enywhere'],
+            'enywhere': ['anywhere'],
+            'anyone': ['enyone'],
+            'enyone': ['anyone'],
+            'anything': ['enything'],
+            'enything': ['anything'],
+            'front': ['frunt'],
+            'frunt': ['front'],
+            'how': ['hou'],
+            'hou': ['how'],
+            'now': ['nou'],
+            'nou': ['now'],
+            'out': ['oat'],
+            'oat': ['out'],
+            'about': ['abut'],
+            'abut': ['about'],
+            'who': ['hoo'],
+            'hoo': ['who'],
+            'her': ['hur'],
+            'hur': ['her']
+        };
+        
         this.consecutiveCorrect = {};
         this.requiredCorrectStreak = 3;
         this.starsEarned = 0;
@@ -875,7 +977,7 @@ class SightWordsGame {
 
             this.speechRecognition.onstart = () => {
                 this.isListening = true;
-                this.updateRecordingStatus('recording', 'Listening... Say the word now!');
+                this.updateRecordingStatus('recording', 'Listening...');
                 this.updateRecordButton(true);
                 this.showLiveTranscription();
             };
@@ -996,7 +1098,7 @@ class SightWordsGame {
             this.clearRecognizedText();
             this.speechRecognition.start();
             
-            this.updateRecordingStatus('ready', 'Speech recognition started! Click to say the word.');
+            this.updateRecordingStatus('ready', 'Speech recognition started!');
             this.updateRecordButton(false);
         }
     }
@@ -1065,8 +1167,23 @@ class SightWordsGame {
         console.log('- recognizedText type:', typeof recognizedText);
         console.log('- currentWord type:', typeof currentWord);
         
-        // Flexible matching: check if the target word appears anywhere in the transcription
-        const isCorrect = recognizedText.includes(currentWord);
+        // Enhanced matching: check exact match first, then homophones
+        let isCorrect = false;
+        
+        // First check for exact match
+        if (recognizedText.includes(currentWord)) {
+            isCorrect = true;
+        } else {
+            // Check if the recognized text matches any homophones of the current word
+            const homophones = this.homophones[currentWord] || [];
+            for (const homophone of homophones) {
+                if (recognizedText.includes(homophone)) {
+                    isCorrect = true;
+                    console.log(`Matched homophone: ${homophone} for ${currentWord}`);
+                    break;
+                }
+            }
+        }
         
         console.log('- isCorrect:', isCorrect);
         console.log('- includes check:', recognizedText, 'includes', currentWord, '=', isCorrect);
@@ -1076,9 +1193,9 @@ class SightWordsGame {
         
         // Update recording status
         if (isCorrect) {
-            this.updateRecordingStatus('ready', 'Great job! You said it correctly!');
+            this.updateRecordingStatus('ready', 'Great job!');
         } else {
-            this.updateRecordingStatus('ready', 'Good try! The word is "' + currentWord + '"');
+            this.updateRecordingStatus('ready', 'Try again!');
         }
         
         // Record attempt
@@ -1104,7 +1221,7 @@ class SightWordsGame {
 
     displayRecognizedText(text, isCorrect) {
         const recognizedDiv = document.getElementById('recognized-text');
-        recognizedDiv.textContent = `I heard: "${text}"`;
+        recognizedDiv.textContent = `"${text}"`;
         recognizedDiv.className = `recognized-text ${isCorrect ? 'correct' : 'incorrect'}`;
     }
 
@@ -1151,7 +1268,7 @@ class SightWordsGame {
 
     resetReadingUI() {
         if (this.speechRecognitionActive) {
-            this.updateRecordingStatus('ready', 'Click to say the word.');
+            this.updateRecordingStatus('ready', 'Ready!');
         } else {
             this.updateRecordingStatus('', '');
         }
@@ -1163,7 +1280,7 @@ class SightWordsGame {
     updateLiveTranscription(text) {
         const liveTranscriptionDiv = document.getElementById('live-transcription');
         if (text) {
-            liveTranscriptionDiv.textContent = `Listening: "${text}"`;
+            liveTranscriptionDiv.textContent = `"${text}"`;
             liveTranscriptionDiv.classList.add('active');
         } else {
             liveTranscriptionDiv.textContent = '';
@@ -1174,7 +1291,7 @@ class SightWordsGame {
     showLiveTranscription() {
         const liveTranscriptionDiv = document.getElementById('live-transcription');
         liveTranscriptionDiv.style.display = 'block';
-        liveTranscriptionDiv.textContent = 'Listening...';
+        liveTranscriptionDiv.textContent = '...';
         liveTranscriptionDiv.classList.add('active');
     }
 
@@ -1196,10 +1313,10 @@ class SightWordsGame {
         
         if (listening) {
             recordBtn.classList.add('recording');
-            recordText.textContent = 'Click to Stop';
+            recordText.textContent = 'Stop';
         } else {
             recordBtn.classList.remove('recording');
-            recordText.textContent = 'Click to Say the Word';
+            recordText.textContent = 'Say the Word';
         }
     }
 
@@ -1309,7 +1426,7 @@ class SightWordsGame {
             this.resetReadingUI();
             // If speech recognition session is active, prepare for next word
             if (this.speechRecognitionActive) {
-                this.updateRecordingStatus('ready', 'Click to say the next word.');
+                this.updateRecordingStatus('ready', 'Ready!');
                 this.updateRecordButton(false);
             }
         }
