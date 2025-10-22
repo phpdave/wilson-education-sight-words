@@ -478,6 +478,7 @@ h1 {
     display: flex;
     gap: 15px;
     justify-content: center;
+    margin-top: 20px;
 }
 
 .shuffle-btn {
@@ -639,17 +640,24 @@ h1 {
     margin-bottom: 20px;
 }
 
-/* Reading Practice - Extra Large Word Display */
-#reading-practice-game #current-word-display {
-    font-size: 4em;
-    font-weight: 900;
+/* Reading Practice - Word Display */
+#reading-practice-game #reading-word-display {
+    font-size: 1.8em;
+    font-weight: bold;
     color: #1a202c;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
     margin: 20px 0;
-    padding: 20px;
+    padding: 15px;
     background: rgba(255, 255, 255, 0.9);
     border-radius: 15px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+#reading-practice-game .word-text {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #1a202c;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .record-btn {
