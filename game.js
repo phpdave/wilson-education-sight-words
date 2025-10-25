@@ -1018,8 +1018,8 @@ class SightWordsGame {
                     // Add a delay to give user time to finish speaking
                     setTimeout(() => {
                         if (this.isListening) {
-                            console.log('Processing reading result with:', this.liveTranscription);
-                            this.processReadingResult(this.liveTranscription);
+                            console.log('Processing reading result with final transcript:', finalTranscript);
+                            this.processReadingResult(finalTranscript);
                         }
                     }, 1500); // Wait 1.5 seconds after final result
                 }
