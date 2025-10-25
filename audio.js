@@ -12,22 +12,56 @@ class AudioController {
 
         this.isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent || '');
         this.isChrome = /Chrome|CriOS/.test(navigator.userAgent || '');
+        this.isSafari = /Safari/.test(navigator.userAgent || '') && !/Chrome/.test(navigator.userAgent || '');
 
         this.audioCache = {}; // Cache for Audio objects
         this.currentAudio = null; // Currently playing Audio object
+        this.audioUnlocked = false; // Track if audio context is unlocked
+        this.pendingAudioQueue = []; // Queue for audio that needs to wait for unlock
 
         this.initializeVoice(); // Still initialize for fallback
-        this._preloadCommonAudio();
+        
+        // For iOS Safari, delay preloading until after user interaction
+        if (this.isIOS && this.isSafari) {
+            console.log('iOS Safari detected - audio preloading delayed until user interaction');
+        } else {
+            this._preloadCommonAudio();
+        }
     }
 
     // Call this once after any user tap/click on iOS Safari
     unlock() {
         if (!this.isSupported) return;
+        
+        // Mark audio as unlocked
+        this.audioUnlocked = true;
+        
         try {
+            // Create a silent audio context unlock for iOS Safari
+            const silentAudio = new Audio();
+            silentAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+            silentAudio.volume = 0;
+            silentAudio.play().catch(() => {
+                // Fallback to speech synthesis unlock
+                const u = new SpeechSynthesisUtterance(' ');
+                u.volume = 0; // silent nudge unlock
+                this.synthesis.speak(u);
+            });
+            
+            // Now preload common audio for iOS Safari
+            if (this.isIOS && this.isSafari) {
+                this._preloadCommonAudio();
+            }
+            
+            // Process any pending audio queue
+            this._processPendingAudioQueue();
+            
+        } catch (_) {
+            // Fallback to speech synthesis unlock
             const u = new SpeechSynthesisUtterance(' ');
             u.volume = 0; // silent nudge unlock
             this.synthesis.speak(u);
-        } catch (_) {}
+        }
     }
 
     initializeVoice() {
@@ -80,13 +114,34 @@ class AudioController {
         if (this.audioCache[audioPath]) return;
         
         const audio = new Audio();
+        // For iOS Safari, don't preload until after user interaction
+        if (this.isIOS && this.isSafari && !this.audioUnlocked) {
+            console.log(`Deferring preload for iOS Safari: ${audioPath}`);
+            return;
+        }
+        
         audio.preload = 'auto';
         audio.src = audioPath;
         this.audioCache[audioPath] = audio;
     }
 
+    _processPendingAudioQueue() {
+        // Process any audio that was queued while waiting for unlock
+        while (this.pendingAudioQueue.length > 0) {
+            const { audioPath, onEnd, resolve, reject } = this.pendingAudioQueue.shift();
+            this._playStaticAudio(audioPath, onEnd).then(resolve).catch(reject);
+        }
+    }
+
     _playStaticAudio(audioPath, onEnd) {
         return new Promise((resolve, reject) => {
+            // For iOS Safari, queue audio if not unlocked yet
+            if (this.isIOS && this.isSafari && !this.audioUnlocked) {
+                console.log(`Queuing audio for iOS Safari unlock: ${audioPath}`);
+                this.pendingAudioQueue.push({ audioPath, onEnd, resolve, reject });
+                return;
+            }
+
             // Stop any currently playing audio
             if (this.currentAudio) {
                 this.currentAudio.pause();
@@ -120,7 +175,7 @@ class AudioController {
             audio.addEventListener('error', handleError);
 
             // iOS requires user interaction to play audio
-            if (this.isIOS) {
+            if (this.isIOS && !this.audioUnlocked) {
                 this.unlock();
             }
 

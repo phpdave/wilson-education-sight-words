@@ -670,6 +670,11 @@ class SightWordsGame {
         this.isFirstFlashCard = true; // Reset for new game session
         this.recentlyUsedWords = []; // Reset recently used words for new session
         
+        // Unlock audio context for iOS Safari
+        if (window.audioController) {
+            window.audioController.unlock();
+        }
+        
         // Generate adaptive word list prioritizing difficult words
         this.wordList = this.generateAdaptiveWordList();
         
@@ -2325,6 +2330,20 @@ class SightWordsGame {
 // Initialize game when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.sightWordsGame = new SightWordsGame();
+    
+    // Unlock audio context for iOS Safari on any user interaction
+    const unlockAudio = () => {
+        if (window.audioController) {
+            window.audioController.unlock();
+        }
+        // Remove listeners after first unlock
+        document.removeEventListener('click', unlockAudio);
+        document.removeEventListener('touchstart', unlockAudio);
+    };
+    
+    // Add listeners for iOS Safari audio unlock
+    document.addEventListener('click', unlockAudio);
+    document.addEventListener('touchstart', unlockAudio);
 });
 
 // Export for use in other modules
