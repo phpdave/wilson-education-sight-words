@@ -694,12 +694,17 @@ class SightWordsGame {
         // Update UI
         this.updateGameHeader();
         this.showScreen('game');
-        this.loadCurrentWord(true); // Speak the first word
+        this.loadCurrentWord(false); // Don't speak yet, wait for instructions
         this.setupGameMode(gameType);
         
-        // Speak game instructions after a short delay
+        // Speak game instructions first, then the word
         setTimeout(() => {
-            this.speakGameInstructions(gameType);
+            this.speakGameInstructions(gameType).then(() => {
+                // After instructions finish, speak the first word
+                setTimeout(() => {
+                    this.speakCurrentWord();
+                }, 500);
+            });
         }, 500);
     }
 
@@ -1211,17 +1216,38 @@ class SightWordsGame {
         console.log('- recognizedText type:', typeof recognizedText);
         console.log('- currentWord type:', typeof currentWord);
         
+        // Validate recognized text
+        if (!recognizedText || typeof recognizedText !== 'string' || recognizedText.trim().length === 0) {
+            console.log('Invalid or empty recognized text, treating as incorrect');
+            this.displayRecognizedText('I didn\'t hear anything', false);
+            this.updateRecordingStatus('ready', 'I didn\'t hear anything. Please speak clearly and try again!');
+            
+            // Show feedback for no recognition
+            setTimeout(() => {
+                this.showReadingFeedback(false, currentWord, 'nothing heard');
+            }, 1000);
+            
+            // Move to next word after feedback
+            setTimeout(() => {
+                this.nextWord();
+            }, 3000);
+            return;
+        }
+        
         // Enhanced matching: check exact match first, then homophones
         let isCorrect = false;
         
+        // Clean up the recognized text
+        const cleanRecognizedText = recognizedText.toLowerCase().trim();
+        
         // First check for exact match
-        if (recognizedText.includes(currentWord)) {
+        if (cleanRecognizedText.includes(currentWord)) {
             isCorrect = true;
         } else {
             // Check if the recognized text matches any homophones of the current word
             const homophones = this.homophones[currentWord] || [];
             for (const homophone of homophones) {
-                if (recognizedText.includes(homophone)) {
+                if (cleanRecognizedText.includes(homophone)) {
                     isCorrect = true;
                     console.log(`Matched homophone: ${homophone} for ${currentWord}`);
                     break;
@@ -1230,7 +1256,7 @@ class SightWordsGame {
         }
         
         console.log('- isCorrect:', isCorrect);
-        console.log('- includes check:', recognizedText, 'includes', currentWord, '=', isCorrect);
+        console.log('- includes check:', cleanRecognizedText, 'includes', currentWord, '=', isCorrect);
         
         // Display what was heard
         this.displayRecognizedText(recognizedText, isCorrect);
@@ -1299,13 +1325,11 @@ class SightWordsGame {
             window.audioController.speakEncouragement();
         } else {
             // For reading practice, speak the correct word pronunciation when student gets it wrong
+            // Use the dynamic phrase handling to avoid double word pronunciation
             window.audioController.speak(`Good try! I heard you say ${recognizedText} but the word is ${correctWord}`, {
                 rate: 0.8,
                 pitch: 1.0,
                 volume: 0.8
-            }).then(() => {
-                // Speak the correct word pronunciation
-                return window.audioController.speakWord(correctWord);
             });
         }
     }
@@ -1934,9 +1958,15 @@ class SightWordsGame {
 
     // Flash Cards Methods
     flipFlashCard() {
+        // Disable button to prevent multiple clicks
+        const flipBtn = document.getElementById('flip-card');
+        flipBtn.disabled = true;
+        flipBtn.textContent = 'Loading...';
+        
         const card = document.getElementById('flash-card');
         const wordSpelling = document.getElementById('word-spelling');
         
+        // Flip the card to show the current word
         card.classList.add('flipped');
         wordSpelling.textContent = this.wordList[this.currentWordIndex];
         
@@ -1947,20 +1977,34 @@ class SightWordsGame {
                 pitch: 1.0,
                 volume: 0.8
             }).then(() => {
-                // After explaining and showing the spelling, automatically move to next word
+                // After explaining, move to next word
                 setTimeout(() => {
-                    this.nextWord();
-                }, 1000); // Short delay after audio finishes
+                    this.advanceFlashCard();
+                }, 1000);
             });
-            this.isFirstFlashCard = false; // Mark that we've shown the instruction
+            this.isFirstFlashCard = false;
         } else {
             // For subsequent cards, just speak the word and move on
             window.audioController.speakWord(this.wordList[this.currentWordIndex]).then(() => {
                 setTimeout(() => {
-                    this.nextWord();
+                    this.advanceFlashCard();
                 }, 1000);
             });
         }
+    }
+    
+    advanceFlashCard() {
+        // Move to next word
+        this.nextWord();
+        
+        // Re-enable button for next card
+        const flipBtn = document.getElementById('flip-card');
+        flipBtn.disabled = false;
+        flipBtn.textContent = 'Show Next Card';
+        
+        // Reset card to front (unflipped) state
+        const card = document.getElementById('flash-card');
+        card.classList.remove('flipped');
     }
 
     // Answer Handling
@@ -2014,11 +2058,7 @@ class SightWordsGame {
             
             window.audioController.speakEncouragement().then(() => {
                 // Read the sentence for context
-                return window.audioController.speak(this.wordStories[currentWord], {
-                    rate: 0.8,
-                    pitch: 1.0,
-                    volume: 0.8
-                });
+                return window.audioController.speakWordStory(currentWord);
             }).then(() => {
                 // Remove highlighting after audio finishes
                 if (this.currentGame === 'multiple-choice') {
@@ -2036,11 +2076,7 @@ class SightWordsGame {
             
             window.audioController.speakCorrection(correctWord, userWord, context).then(() => {
                 // Read the sentence for context
-                return window.audioController.speak(this.wordStories[currentWord], {
-                    rate: 0.8,
-                    pitch: 1.0,
-                    volume: 0.8
-                });
+                return window.audioController.speakWordStory(currentWord);
             }).then(() => {
                 // Remove highlighting after audio finishes
                 if (this.currentGame === 'multiple-choice') {

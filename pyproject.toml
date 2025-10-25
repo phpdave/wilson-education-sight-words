@@ -1,0 +1,17 @@
+[project]
+name = "sight-words-audio"
+version = "0.1.0"
+description = "High-quality audio generator for sight words game using ElevenLabs API"
+authors = [
+    {name = "Wilson Education"}
+]
+readme = "README.md"
+requires-python = "^3.9"
+dependencies = [
+    "requests (>=2.32.5,<3.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
