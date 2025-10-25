@@ -267,6 +267,19 @@ class AudioController {
                 }
                 if (onEnd) onEnd();
                 return;
+            } else if (text.includes('You wrote') && text.includes('but the correct spelling is')) {
+                // This is a spelling correction phrase - play template parts
+                const parts = text.split(' but the correct spelling is ');
+                if (parts.length === 2) {
+                    const userWord = parts[0].split('You wrote ')[1];
+                    const correctWord = parts[1];
+                    await this._playStaticAudio('audio/corrections/you-wrote.mp3');
+                    await this.speakWord(userWord);
+                    await this._playStaticAudio('audio/corrections/but-the-correct-spelling-is.mp3');
+                    await this.speakWord(correctWord);
+                }
+                if (onEnd) onEnd();
+                return;
             } else {
                 // Try generic phrase matching
                 audioPath = `audio/phrases/${text.toLowerCase().replace(/[^a-z0-9]/g, '-')}.mp3`;
@@ -352,7 +365,11 @@ class AudioController {
         } else {
             // Build correction phrase based on context
             if (context === 'typed') {
-                correctionText = `The correct spelling is ${correctWord}`;
+                if (userWord && userWord.trim()) {
+                    correctionText = `You wrote ${userWord}, but the correct spelling is ${correctWord}`;
+                } else {
+                    correctionText = `The correct spelling is ${correctWord}`;
+                }
             } else if (context === 'selected') {
                 correctionText = `The correct word is ${correctWord}`;
             } else if (context === 'arranged') {
@@ -363,14 +380,8 @@ class AudioController {
         }
 
         try {
-            // Try to play static correction audio - use first correction file as template
-            const audioPath = `audio/corrections/correction-1.mp3`;
-            await this._playStaticAudio(audioPath, onEnd);
-            
-            // Then speak the specific word
-            if (correctWord && !correctWord.includes(' ')) {
-                await this.speakWord(correctWord);
-            }
+            // Try to play static correction audio with dynamic phrase handling
+            await this.speak(correctionText, {}, onEnd);
         } catch (error) {
             // Fallback to speech synthesis
             console.log(`Using fallback speech for correction: "${correctionText}"`);
