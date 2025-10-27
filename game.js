@@ -1649,6 +1649,7 @@ class SightWordsGame {
                 draggedTile = e.target;
                 e.target.classList.add('dragging');
                 e.dataTransfer.setData('text/plain', e.target.dataset.letter);
+                console.log('LetterBank dragstart:', { letter: e.target.dataset.letter, tile: e.target });
             }
         });
 
@@ -1666,6 +1667,8 @@ class SightWordsGame {
             e.preventDefault();
             const letter = e.dataTransfer.getData('text/plain');
             const slot = e.target.closest('.slot');
+            
+            console.log('Drop event:', { letter, slot, draggedTile, slotContent: slot?.innerHTML });
             
             if (slot && draggedTile) {
                 // If slot already has a tile, move it back to bank
