@@ -454,6 +454,19 @@ class AudioController {
         }
     }
 
+    async spellLetter(letter, onEnd) {
+        try {
+            // Play individual letter audio
+            const audioPath = `audio/letters/${letter.toLowerCase()}.mp3`;
+            await this._playStaticAudio(audioPath);
+            if (onEnd) onEnd();
+        } catch (error) {
+            // Fallback to speech synthesis
+            console.log(`Using fallback speech for letter: "${letter}"`);
+            this._playFallbackSpeech(letter, onEnd);
+        }
+    }
+
     // Stop any currently playing audio
     stop() {
         if (this.currentAudio) {

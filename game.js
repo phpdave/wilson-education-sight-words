@@ -2088,19 +2088,89 @@ class SightWordsGame {
                 this.highlightSelectedChoice(true);
             }
             
-            window.audioController.speakCorrection(correctWord, userWord, context).then(() => {
-                // Read the sentence for context
-                return window.audioController.speakWordStory(currentWord);
-            }).then(() => {
-                // Remove highlighting after audio finishes
-                if (this.currentGame === 'multiple-choice') {
-                    this.highlightSelectedChoice(false);
-                }
-                setTimeout(() => {
-                    this.nextWord();
-                }, 1000);
-            });
+            // For Letter Scramble, show word and spell it with visual highlighting
+            if (this.currentGame === 'scramble') {
+                this.showScrambleCorrection(correctWord).then(() => {
+                    setTimeout(() => {
+                        this.nextWord();
+                    }, 1000);
+                });
+            } else {
+                window.audioController.speakCorrection(correctWord, userWord, context).then(() => {
+                    // Read the sentence for context
+                    return window.audioController.speakWordStory(currentWord);
+                }).then(() => {
+                    // Remove highlighting after audio finishes
+                    if (this.currentGame === 'multiple-choice') {
+                        this.highlightSelectedChoice(false);
+                    }
+                    setTimeout(() => {
+                        this.nextWord();
+                    }, 1000);
+                });
+            }
         }
+    }
+
+    async showScrambleCorrection(correctWord) {
+        return new Promise(async (resolve) => {
+            // Display the correct word
+            const scrambleDisplay = document.getElementById('scramble-word-display');
+            if (scrambleDisplay) {
+                scrambleDisplay.innerHTML = `
+                    <div class="word-display-enhanced">
+                        <span class="word-text">The correct spelling is: <strong>${correctWord.toUpperCase()}</strong></span>
+                    </div>
+                `;
+            }
+            
+            // Get the word slot to display letters
+            const wordSlot = document.getElementById('word-slot');
+            
+            // Clear existing content
+            if (wordSlot) {
+                wordSlot.innerHTML = '';
+                
+                // Create visual display of each letter
+                const letters = correctWord.split('');
+                letters.forEach((letter, index) => {
+                    const slot = document.createElement('div');
+                    slot.className = 'slot';
+                    slot.dataset.position = index;
+                    
+                    const tile = document.createElement('div');
+                    tile.className = 'letter-tile';
+                    tile.textContent = letter.toUpperCase();
+                    tile.dataset.letter = letter;
+                    
+                    slot.appendChild(tile);
+                    wordSlot.appendChild(slot);
+                });
+            }
+            
+            // Speak the word, then spell it letter by letter with highlighting
+            await window.audioController.speakWord(correctWord);
+            
+            // Spell it out with visual highlighting
+            const letters = correctWord.split('');
+            for (let i = 0; i < letters.length; i++) {
+                const letter = letters[i];
+                const slots = wordSlot.querySelectorAll('.slot');
+                if (slots[i]) {
+                    slots[i].classList.add('highlighted');
+                }
+                
+                await window.audioController.spellLetter(letter);
+                
+                await new Promise(r => setTimeout(r, 300)); // Small delay between letters
+                
+                if (slots[i]) {
+                    slots[i].classList.remove('highlighted');
+                }
+            }
+            
+            resolve();
+        });
     }
 
     highlightSelectedChoice(highlight) {

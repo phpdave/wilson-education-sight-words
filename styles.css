@@ -481,6 +481,13 @@ h1 {
     background: #f0f9ff;
 }
 
+.slot.highlighted {
+    border-color: #ff6b6b;
+    background: #ffebee;
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(255, 107, 107, 0.5);
+}
+
 .scramble-controls {
     display: flex;
     gap: 15px;
