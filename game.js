@@ -1330,14 +1330,20 @@ class SightWordsGame {
         
         // Speak simple feedback without sentences for Reading Practice
         if (isCorrect) {
-            window.audioController.speakEncouragement();
+            console.log('Playing encouragement for correct answer');
+            window.audioController.speakEncouragement().catch(error => {
+                console.error('Error playing encouragement:', error);
+            });
         } else {
             // For reading practice, speak the correct word pronunciation when student gets it wrong
             // Use the dynamic phrase handling to avoid double word pronunciation
+            console.log('Playing correction audio for incorrect answer');
             window.audioController.speak(`Good try! I heard you say ${recognizedText} but the word is ${correctWord}`, {
                 rate: 0.8,
                 pitch: 1.0,
                 volume: 0.8
+            }).catch(error => {
+                console.error('Error playing correction:', error);
             });
         }
     }
@@ -2180,9 +2186,10 @@ class SightWordsGame {
             this.endGame();
         } else {
             this.loadCurrentWord(); // Don't speak here, handle separately
-            // Automatically speak the next word (except for Reading Practice)
+            // Automatically speak the next word (except for Reading Practice and Flash Cards)
             // Reading practice: students try to say the word first, then hear correct pronunciation if wrong
-            if (this.currentGame !== 'reading-practice') {
+            // Flash Cards: word is spoken when user flips the card, not automatically
+            if (this.currentGame !== 'reading-practice' && this.currentGame !== 'flashcards') {
                 setTimeout(() => {
                     this.speakCurrentWord();
                 }, 500);
