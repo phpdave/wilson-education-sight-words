@@ -1680,27 +1680,13 @@ class SightWordsGame {
                     }
                 }
                 
-                // Check if we already have this letter in another slot
-                const existingSlots = wordSlot.querySelectorAll('.slot.filled');
-                let canPlace = true;
+                // Allow placing the tile - no need to check for duplicates
+                // Multiple letters of the same type can exist in a word (e.g., "COOKIE", "APPLE", "COFFEE")
+                slot.appendChild(draggedTile);
+                slot.classList.add('filled');
+                draggedTile.classList.remove('dragging');
                 
-                existingSlots.forEach(existingSlot => {
-                    const existingLetter = existingSlot.querySelector('.letter-tile')?.dataset.letter;
-                    if (existingLetter === letter) {
-                        canPlace = false;
-                    }
-                });
-                
-                if (canPlace) {
-                    // Move the dragged tile to the slot
-                    slot.appendChild(draggedTile);
-                    slot.classList.add('filled');
-                    draggedTile.classList.remove('dragging');
-                } else {
-                    // If letter already exists, move the dragged tile back to bank
-                    letterBank.appendChild(draggedTile);
-                    draggedTile.classList.remove('dragging');
-                }
+                console.log('Successfully placed tile in slot');
             }
         });
 
