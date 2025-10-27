@@ -706,9 +706,12 @@ class SightWordsGame {
         setTimeout(() => {
             this.speakGameInstructions(gameType).then(() => {
                 // After instructions finish, speak the first word
-                setTimeout(() => {
-                    this.speakCurrentWord();
-                }, 500);
+                // EXCEPT for flashcards and reading practice - they handle their own word playback
+                if (gameType !== 'flashcards' && gameType !== 'reading-practice') {
+                    setTimeout(() => {
+                        this.speakCurrentWord();
+                    }, 500);
+                }
             });
         }, 500);
     }
@@ -1510,13 +1513,23 @@ class SightWordsGame {
     }
 
     speakCurrentWord() {
-        if (!this.isGameActive || !this.wordList || this.wordList.length === 0 || 
+        // Always speak the word, even if game is not active (for speaker button clicks)
+        if (!this.wordList || this.wordList.length === 0 || 
             this.currentWordIndex >= this.wordList.length) {
+            console.log('No word available to speak');
             return;
         }
         
         const currentWord = this.wordList[this.currentWordIndex];
-        window.audioController.speakWord(currentWord);
+        if (!currentWord) {
+            console.log('Current word is undefined or empty');
+            return;
+        }
+        
+        console.log('Speaking word:', currentWord);
+        window.audioController.speakWord(currentWord).catch(error => {
+            console.error('Error speaking word:', error);
+        });
     }
 
     // Spelling Game Methods
@@ -1882,7 +1895,8 @@ class SightWordsGame {
         const correctWord = this.wordList[this.currentWordIndex].toLowerCase();
         const isCorrect = userAnswer === correctWord;
         
-        this.handleAnswer(isCorrect, correctWord);
+        // Pass userAnswer as userWord so it can be used in correction feedback
+        this.handleAnswer(isCorrect, correctWord, userAnswer);
     }
 
     // Multiple Choice Methods

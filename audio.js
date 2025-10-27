@@ -275,8 +275,43 @@ class AudioController {
                     const correctWord = parts[1];
                     await this._playStaticAudio('audio/corrections/you-wrote.mp3');
                     await this.speakWord(userWord);
+                    // Spell out the word the user wrote
+                    await this.spellWord(userWord);
                     await this._playStaticAudio('audio/corrections/but-the-correct-spelling-is.mp3');
                     await this.speakWord(correctWord);
+                    // Spell out the correct word
+                    await this.spellWord(correctWord);
+                }
+                if (onEnd) onEnd();
+                return;
+            } else if (text.includes('You arranged') && text.includes('but the correct spelling is')) {
+                // This is a letter scramble correction phrase - play template parts
+                const parts = text.split(' but the correct spelling is ');
+                if (parts.length === 2) {
+                    const userWord = parts[0].split('You arranged ')[1];
+                    const correctWord = parts[1];
+                    await this._playStaticAudio('audio/corrections/you-arranged.mp3');
+                    await this.speakWord(userWord);
+                    // Spell out the word the user arranged
+                    await this.spellWord(userWord);
+                    await this._playStaticAudio('audio/corrections/but-the-correct-spelling-is.mp3');
+                    await this.speakWord(correctWord);
+                    // Spell out the correct word
+                    await this.spellWord(correctWord);
+                }
+                if (onEnd) onEnd();
+                return;
+            } else if (text.includes('You selected') && text.includes('but the correct word is')) {
+                // This is a multiple choice correction phrase - play template parts
+                const parts = text.split(' but the correct word is ');
+                if (parts.length === 2) {
+                    const userWord = parts[0].split('You selected ')[1];
+                    const correctWord = parts[1];
+                    await this.speakWord(userWord);
+                    await this._playStaticAudio('audio/corrections/but-the-word-is.mp3');
+                    await this.speakWord(correctWord);
+                    // Spell out the correct word
+                    await this.spellWord(correctWord);
                 }
                 if (onEnd) onEnd();
                 return;
@@ -371,9 +406,17 @@ class AudioController {
                     correctionText = `The correct spelling is ${correctWord}`;
                 }
             } else if (context === 'selected') {
-                correctionText = `The correct word is ${correctWord}`;
+                if (userWord && userWord.trim()) {
+                    correctionText = `You selected ${userWord}, but the correct word is ${correctWord}`;
+                } else {
+                    correctionText = `The correct word is ${correctWord}`;
+                }
             } else if (context === 'arranged') {
-                correctionText = `The correct arrangement is ${correctWord}`;
+                if (userWord && userWord.trim()) {
+                    correctionText = `You arranged ${userWord}, but the correct spelling is ${correctWord}`;
+                } else {
+                    correctionText = `The correct arrangement is ${correctWord}`;
+                }
             } else {
                 correctionText = `The correct word is ${correctWord}`;
             }

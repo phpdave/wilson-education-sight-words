@@ -346,6 +346,13 @@ h1 {
     justify-content: center;
 }
 
+/* Smaller font for placeholder text like "Click the speaker button to hear the word" */
+.word-display-enhanced .word-text {
+    font-size: 1.2em !important;
+    color: #718096 !important;
+    font-weight: normal !important;
+}
+
 /* Input Area */
 .input-area {
     display: flex;
