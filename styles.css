@@ -346,11 +346,28 @@ h1 {
     justify-content: center;
 }
 
+/* Flash card word display override */
+.card-front #flash-word-display {
+    color: white !important;
+}
+
 /* Smaller font for placeholder text like "Click the speaker button to hear the word" */
 .word-display-enhanced .word-text {
     font-size: 1.2em !important;
     color: #718096 !important;
     font-weight: normal !important;
+}
+
+/* Flash card word text - make it large, white, and easy to read */
+.card-front .word-display-enhanced .word-text,
+.card-front .word-text {
+    font-size: 1.2em !important;
+    color: white !important;
+    font-weight: 700 !important;
+    text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.7) !important;
+    font-family: 'Comic Sans MS', 'Marker Felt', 'Bradley Hand', 'Chalkduster', 'Comic Neue', cursive, sans-serif !important;
+    line-height: 1.4 !important;
+    letter-spacing: 0.5px !important;
 }
 
 /* Input Area */
