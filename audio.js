@@ -1,5 +1,10 @@
 // Sight Words Game - High-Quality Audio System (Static Files with Speech Synthesis Fallback)
 // Updated: Fixed missing speakWord method - v2.1
+//
+// IMPORTANT: Always use ElevenLabs to generate static MP3 audio files for any text that can be
+// pre-generated. This provides consistent, high-quality audio for children's learning.
+// Only use browser text-to-speech (speechSynthesis) as a fallback when static audio files
+// are not available. See generate_additional_audio.py for generating phrase audio files.
 
 class AudioController {
     constructor() {
@@ -241,6 +246,12 @@ class AudioController {
                 audioPath = 'audio/phrases/welcome-flashcards.mp3';
             } else if (text.includes('Welcome to Reading Practice')) {
                 audioPath = 'audio/phrases/welcome-reading-practice.mp3';
+            } else if (text.includes('Welcome to Word Cards')) {
+                audioPath = 'audio/phrases/welcome-word-cards.mp3';
+            } else if (text.includes('Welcome to Self-Dictation')) {
+                audioPath = 'audio/phrases/welcome-self-dictation.mp3';
+            } else if (text.includes('Welcome to Oral Reading Fluency')) {
+                audioPath = 'audio/phrases/welcome-oral-fluency.mp3';
             } else if (text.includes("I didn't hear anything")) {
                 audioPath = 'audio/phrases/didnt-hear-anything.mp3';
             } else if (text.includes('Speech recognition is not supported')) {

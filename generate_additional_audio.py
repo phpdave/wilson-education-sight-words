@@ -71,12 +71,17 @@ class AdditionalAudioGenerator:
             "welcome-multiple-choice": "Welcome to Multiple Choice! Listen to the word and click on the correct spelling. Click the speaker button if you need to hear the word again.",
             "welcome-flashcards": "Welcome to Flash Cards! Look at the word and listen to help you remember it. Click 'Show Next Card' when you're ready.",
             "welcome-reading-practice": "Welcome to Reading Practice! Look at the word and try to say it out loud. If you get it wrong, you'll hear the correct pronunciation to help you learn.",
+            "welcome-word-cards": "Welcome to Word Cards! Choose Beat the Clock to read words quickly, or Trace, Flip, and Spell to practice spelling.",
+            "welcome-self-dictation": "Welcome to Self-Dictation! Read the sentence, then cover it and write it from memory. Check your spelling, punctuation, and capitalization before uncovering.",
+            "welcome-oral-fluency": "Welcome to Oral Reading Fluency! Read the sentence out loud. Try to read it three times, getting faster and more fluent each time. After you read, you can hear your recording back.",
             
             # Dynamic feedback phrases
             "good-try-template": "Good try! I heard you say",
             "but-the-word-is": "but the word is",
             "look-at-word-template": "Look at the word and listen to help you remember it. The word is",
             "click-speaker-to-hear": "Click the speaker button to hear the word",
+            "the-correct-sentence-is": "The correct sentence is",
+            "but-you-wrote": "But you wrote",
             
             # Common error messages
             "didnt-hear-anything": "I didn't hear anything. Please speak clearly and try again!",

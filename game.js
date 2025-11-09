@@ -724,10 +724,15 @@ class SightWordsGame {
         setTimeout(() => {
             this.speakGameInstructions(gameType).then(() => {
                 // After instructions finish, speak the first word
-                // EXCEPT for flashcards and reading practice - they handle their own word playback
-                if (gameType !== 'flashcards' && gameType !== 'reading-practice') {
+                // EXCEPT for flashcards, reading practice, word-cards, and oral-fluency - they handle their own word playback
+                if (gameType !== 'flashcards' && gameType !== 'reading-practice' && gameType !== 'word-cards' && gameType !== 'oral-fluency') {
                     setTimeout(() => {
                         this.speakCurrentWord();
+                    }, 500);
+                } else if (gameType === 'self-dictation') {
+                    // For self-dictation, speak the sentence after instructions
+                    setTimeout(() => {
+                        this.speakDictationSentence();
                     }, 500);
                 }
             });
@@ -735,6 +740,9 @@ class SightWordsGame {
     }
 
     speakGameInstructions(gameType) {
+        // NOTE: These instructions use ElevenLabs-generated MP3 files (see audio.js speak() method).
+        // Always generate static audio files for any text that can be pre-generated to ensure
+        // consistent, high-quality audio for children's learning.
         const instructions = {
             'spelling': "Welcome to the Spelling Challenge! Listen to the word and type it in the box. Click the speaker button if you need to hear the word again.",
             'scramble': "Welcome to Letter Scramble! Listen to the word and arrange the letters in the correct order. Drag the letters to spell the word.",
@@ -1534,6 +1542,12 @@ class SightWordsGame {
         uncoverBtn.style.display = 'none';
         checklist.style.display = 'none';
         
+        // Remove any existing cover overlay
+        const existingOverlay = sentenceDisplay.querySelector('.cover-overlay');
+        if (existingOverlay) {
+            existingOverlay.remove();
+        }
+        
         // Remove existing listeners
         const newCoverBtn = coverBtn.cloneNode(true);
         const newUncoverBtn = uncoverBtn.cloneNode(true);
@@ -1543,14 +1557,49 @@ class SightWordsGame {
         checkBtn.parentNode.replaceChild(newCheckBtn, checkBtn);
         
         newCoverBtn.addEventListener('click', () => {
-            sentenceDisplay.style.opacity = '0.1';
+            // Completely hide the sentence by setting opacity to 0 and adding a visual cover
+            sentenceDisplay.style.opacity = '0';
+            sentenceDisplay.style.visibility = 'hidden';
+            sentenceDisplay.style.position = 'relative';
+            // Add a visual cover overlay
+            let coverOverlay = sentenceDisplay.querySelector('.cover-overlay');
+            if (!coverOverlay) {
+                coverOverlay = document.createElement('div');
+                coverOverlay.className = 'cover-overlay';
+                coverOverlay.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: #f7fafc;
+                    border: 2px dashed #cbd5e0;
+                    border-radius: 15px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 1.2em;
+                    color: #718096;
+                    z-index: 10;
+                `;
+                coverOverlay.textContent = 'Sentence covered - Write from memory!';
+                sentenceDisplay.style.position = 'relative';
+                sentenceDisplay.appendChild(coverOverlay);
+            }
+            coverOverlay.style.display = 'flex';
             newCoverBtn.style.display = 'none';
             newUncoverBtn.style.display = 'block';
             input.focus();
         });
         
         newUncoverBtn.addEventListener('click', () => {
+            // Show the sentence again
             sentenceDisplay.style.opacity = '1';
+            sentenceDisplay.style.visibility = 'visible';
+            const coverOverlay = sentenceDisplay.querySelector('.cover-overlay');
+            if (coverOverlay) {
+                coverOverlay.style.display = 'none';
+            }
             newUncoverBtn.style.display = 'none';
             newCoverBtn.style.display = 'block';
         });
@@ -1586,6 +1635,8 @@ class SightWordsGame {
             }, 3000);
         } else {
             this.showFeedback(false, correctText, userText);
+            // Provide audio feedback for incorrect answer
+            this.speakDictationFeedback(correctText, userText);
         }
     }
 
@@ -1600,6 +1651,75 @@ class SightWordsGame {
         // Check if first letter is capitalized
         return userText.charAt(0) === correctText.charAt(0) && 
                userText.charAt(0) === userText.charAt(0).toUpperCase();
+    }
+
+    speakDictationSentence() {
+        // Speak the sentence for Self-Dictation using the sentence variation audio
+        const currentWord = this.wordList[this.currentWordIndex];
+        const sentence = this.currentDictationSentence || this.getSentenceVariation(currentWord);
+        const sentences = this.wordStories[currentWord.toLowerCase()];
+        
+        if (Array.isArray(sentences)) {
+            // Find which variation index matches the current sentence
+            const variationIndex = sentences.findIndex(s => s === sentence);
+            if (variationIndex >= 0) {
+                // Use the pre-generated sentence variation MP3
+                return window.audioController.speakSentenceVariation(currentWord, variationIndex).catch(error => {
+                    console.error('Error speaking sentence:', error);
+                    // Fallback: use text-to-speech
+                    return window.audioController.speak(sentence, {
+                        rate: 0.8,
+                        pitch: 1.0,
+                        volume: 0.8
+                    });
+                });
+            }
+        }
+        // Fallback: use text-to-speech
+        return window.audioController.speak(sentence, {
+            rate: 0.8,
+            pitch: 1.0,
+            volume: 0.8
+        }).catch(error => {
+            console.error('Error speaking sentence:', error);
+        });
+    }
+
+    speakDictationFeedback(correctSentence, userSentence) {
+        // Speak feedback: "The correct sentence is: [sentence]. But you wrote: [user text]"
+        // Use ElevenLabs audio files for the phrase parts, then speak the sentences
+        window.audioController.speakPhrase("the-correct-sentence-is").then(() => {
+            // Speak the correct sentence using the sentence variation audio if available
+            const currentWord = this.wordList[this.currentWordIndex];
+            const sentences = this.wordStories[currentWord.toLowerCase()];
+            if (Array.isArray(sentences)) {
+                // Find which variation index matches the correct sentence
+                const variationIndex = sentences.findIndex(s => s === correctSentence);
+                if (variationIndex >= 0) {
+                    return window.audioController.speakSentenceVariation(currentWord, variationIndex);
+                }
+            }
+            // Fallback: use text-to-speech for the sentence
+            return window.audioController.speak(correctSentence, {
+                rate: 0.8,
+                pitch: 1.0,
+                volume: 0.8
+            });
+        }).then(() => {
+            // Small pause before "but you wrote"
+            return new Promise(resolve => setTimeout(resolve, 500));
+        }).then(() => {
+            return window.audioController.speakPhrase("but-you-wrote");
+        }).then(() => {
+            // Speak what the user wrote using text-to-speech (dynamic content)
+            return window.audioController.speak(userSentence, {
+                rate: 0.8,
+                pitch: 1.0,
+                volume: 0.8
+            });
+        }).catch(error => {
+            console.error('Error speaking dictation feedback:', error);
+        });
     }
 
     // Word Cards Game Setup
@@ -1672,6 +1792,9 @@ class SightWordsGame {
         startBtn.style.display = 'none';
         nextBtn.style.display = 'block';
         
+        // Update the progress header
+        this.updateGameHeader();
+        
         this.beatClockTimer = setInterval(() => {
             this.beatClockTimeLeft--;
             const minutes = Math.floor(this.beatClockTimeLeft / 60);
@@ -1693,6 +1816,9 @@ class SightWordsGame {
         const wordDisplay = document.getElementById('word-card-display');
         
         wordCountDisplay.textContent = `Words: ${this.beatClockWordsRead} / ${this.beatClockTargetCount}`;
+        
+        // Update the progress header
+        this.updateGameHeader();
         
         if (this.beatClockWordsRead >= this.beatClockTargetCount) {
             this.endBeatTheClock(true);
@@ -1754,10 +1880,13 @@ class SightWordsGame {
         nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
         
         newStartBtn.addEventListener('click', () => {
+            this.traceWordIndex = 0;
             wordDisplay.textContent = this.traceWordList[0];
             newStartBtn.style.display = 'none';
             newFlipBtn.style.display = 'block';
             this.traceCardFlipped = false;
+            // Update the progress header
+            this.updateGameHeader();
         });
         
         newFlipBtn.addEventListener('click', () => {
@@ -1801,6 +1930,8 @@ class SightWordsGame {
             newNextBtn.style.display = 'none';
             newFlipBtn.style.display = 'block';
             this.traceCardFlipped = false;
+            // Update the progress header
+            this.updateGameHeader();
         });
     }
 
@@ -2775,11 +2906,40 @@ class SightWordsGame {
 
     updateGameHeader() {
         document.getElementById('game-title').textContent = this.getGameTitle();
-        document.getElementById('current-word').textContent = `Word ${this.currentWordIndex + 1} of ${this.wordList.length}`;
-        document.getElementById('score').textContent = `Score: ${this.score}`;
         
-        const progressPercent = (this.currentWordIndex / this.wordList.length) * 100;
-        document.getElementById('session-progress').style.width = `${progressPercent}%`;
+        // For Word Cards game, use its own progress tracking
+        if (this.currentGame === 'word-cards') {
+            // Check which mode is active
+            const beatClockMode = document.getElementById('beat-clock-mode');
+            const traceMode = document.getElementById('trace-flip-spell-mode');
+            
+            if (beatClockMode && beatClockMode.classList.contains('active')) {
+                // Beat the Clock mode
+                const wordsRead = this.beatClockWordsRead || 0;
+                const targetCount = this.beatClockTargetCount || 30;
+                document.getElementById('current-word').textContent = `Word ${wordsRead + 1} of ${targetCount}`;
+                const progressPercent = (wordsRead / targetCount) * 100;
+                document.getElementById('session-progress').style.width = `${progressPercent}%`;
+            } else if (traceMode && traceMode.classList.contains('active')) {
+                // Trace, Flip, and Spell mode
+                const wordIndex = (this.traceWordIndex || 0) + 1;
+                const totalWords = this.traceWordList ? this.traceWordList.length : this.wordBank.length;
+                document.getElementById('current-word').textContent = `Word ${wordIndex} of ${totalWords}`;
+                const progressPercent = ((this.traceWordIndex || 0) / totalWords) * 100;
+                document.getElementById('session-progress').style.width = `${progressPercent}%`;
+            } else {
+                // Default fallback
+                document.getElementById('current-word').textContent = `Word 1 of ${this.wordBank.length}`;
+                document.getElementById('session-progress').style.width = `0%`;
+            }
+        } else {
+            // For other games, use the standard word list progression
+            document.getElementById('current-word').textContent = `Word ${this.currentWordIndex + 1} of ${this.wordList.length}`;
+            const progressPercent = (this.currentWordIndex / this.wordList.length) * 100;
+            document.getElementById('session-progress').style.width = `${progressPercent}%`;
+        }
+        
+        document.getElementById('score').textContent = `Score: ${this.score}`;
     }
 
     getGameTitle() {
