@@ -1556,3 +1556,347 @@ h1 {
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
+
+/* Oral Reading Fluency Game Styles */
+.fluency-display {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.sentence-display {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #2d3748;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wpm-display {
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #4ecdc4;
+    margin-bottom: 20px;
+}
+
+.fluency-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.reading-count {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #718096;
+}
+
+.playback-btn {
+    background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 15px 30px;
+    font-size: 1.2em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+}
+
+.playback-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(78, 205, 196, 0.4);
+}
+
+/* Self-Dictation Game Styles */
+.dictation-display {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+#dictation-sentence-display {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #2d3748;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.3s ease;
+}
+
+.cover-btn, .uncover-btn {
+    background: linear-gradient(135deg, #feca57 0%, #ff6b6b 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 15px 30px;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(254, 202, 87, 0.3);
+}
+
+.cover-btn:hover, .uncover-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(254, 202, 87, 0.4);
+}
+
+.dictation-input-area {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+#dictation-input {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 1.2em;
+    font-family: 'Comic Sans MS', cursive;
+    resize: vertical;
+    min-height: 100px;
+}
+
+#dictation-input:focus {
+    outline: none;
+    border-color: #4ecdc4;
+    box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
+}
+
+.dictation-controls {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.proofreading-checklist {
+    background: #f7fafc;
+    border-radius: 15px;
+    padding: 20px;
+    margin-top: 20px;
+    border: 2px solid #e2e8f0;
+}
+
+.proofreading-checklist h4 {
+    margin-bottom: 15px;
+    color: #2d3748;
+    font-family: 'Comic Sans MS', cursive;
+}
+
+.proofreading-checklist label {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+    color: #4a5568;
+    cursor: pointer;
+    font-family: 'Comic Sans MS', cursive;
+}
+
+.proofreading-checklist input[type="checkbox"] {
+    margin-right: 10px;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+/* Word Cards Game Styles */
+.word-cards-mode-selector {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+
+.mode-select-btn {
+    background: #e2e8f0;
+    color: #4a5568;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Comic Sans MS', cursive;
+}
+
+.mode-select-btn.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.mode-select-btn:hover {
+    transform: translateY(-2px);
+}
+
+.card-mode {
+    display: none;
+}
+
+.card-mode.active {
+    display: block;
+}
+
+/* Beat the Clock Mode Styles */
+.timer-display {
+    font-size: 3em;
+    font-weight: bold;
+    color: #ff6b6b;
+    text-align: center;
+    margin-bottom: 20px;
+    font-family: 'Comic Sans MS', cursive;
+}
+
+.word-count-display {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #4a5568;
+    text-align: center;
+    margin-bottom: 20px;
+    font-family: 'Comic Sans MS', cursive;
+}
+
+.word-card-display {
+    font-size: 2.5em;
+    font-weight: bold;
+    color: #2d3748;
+    text-align: center;
+    padding: 30px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border-radius: 15px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    margin-bottom: 30px;
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Comic Sans MS', cursive;
+}
+
+.beat-clock-controls {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.start-btn {
+    background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 15px 30px;
+    font-size: 1.2em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+    font-family: 'Comic Sans MS', cursive;
+}
+
+.start-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(78, 205, 196, 0.4);
+}
+
+#word-count-select {
+    padding: 10px 15px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 1em;
+    font-family: 'Comic Sans MS', cursive;
+    cursor: pointer;
+}
+
+#word-count-select:focus {
+    outline: none;
+    border-color: #4ecdc4;
+}
+
+/* Trace, Flip, and Spell Mode Styles */
+#trace-word-display {
+    font-size: 3em;
+    font-weight: bold;
+    color: #2d3748;
+    text-align: center;
+    padding: 40px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border-radius: 15px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    margin-bottom: 30px;
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Comic Sans MS', cursive;
+}
+
+.trace-instructions {
+    background: #f7fafc;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 30px;
+    border: 2px solid #e2e8f0;
+}
+
+.trace-instructions p {
+    margin: 10px 0;
+    font-size: 1.1em;
+    color: #4a5568;
+    font-family: 'Comic Sans MS', cursive;
+}
+
+.trace-controls {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.spelling-input-area {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+#trace-spelling-input {
+    padding: 15px 20px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 1.3em;
+    text-align: center;
+    font-family: 'Comic Sans MS', cursive;
+    min-width: 300px;
+}
+
+#trace-spelling-input:focus {
+    outline: none;
+    border-color: #4ecdc4;
+    box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
+}

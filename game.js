@@ -29,62 +29,71 @@ class SightWordsGame {
             'mi', 'tri', 'poot', 'pooting', 'onely', 'werk', 'werd', 'werld'
         ];
         
-        // Enhanced learning features
+        // Enhanced learning features - 3 sentence variations per word
         this.wordStories = {
-            'her': 'Her name is Sarah.',
-            'who': 'Who is at the door?',
-            'some': 'I have some cookies.',
-            'out': 'Let\'s go out to play.',
-            'about': 'Tell me about your day.',
-            'too': 'I want to go too!',
-            'two': 'I have two cats.',
-            'were': 'We were happy yesterday.',
-            'what': 'What is your favorite color?',
-            'come': 'Come here, please.',
-            'comes': 'The bus comes at eight.',
-            'coming': 'The train is coming now.',
-            'become': 'I want to become a teacher.',
-            'becomes': 'She becomes happy when she sings.',
-            'becoming': 'The sky is becoming dark.',
-            'their': 'Their house is big.',
-            'no': 'No, thank you.',
-            'so': 'I am so excited!',
-            'also': 'I also like pizza.',
-            'how': 'How are you today?',
-            'now': 'We can play now.',
-            'where': 'Where is my book?',
-            'here': 'Come here, please.',
-            'there': 'The park is over there.',
-            'any': 'Do you have any questions?',
-            'anywhere': 'We can go anywhere you want.',
-            'anyone': 'Anyone can join the game.',
-            'anything': 'You can ask me anything.',
-            'many': 'There are many flowers.',
-            'front': 'The car is in front of the house.',
-            'very': 'This cake is very good.',
-            'every': 'Every day is special.',
-            'everywhere': 'We looked everywhere for the toy.',
-            'everyone': 'Everyone is welcome here.',
-            'everything': 'Everything will be okay.',
-            'could': 'Could you help me, please?',
-            'would': 'Would you like some juice?',
-            'should': 'You should eat your vegetables.',
-            'when': 'When is your birthday?',
-            'which': 'Which book do you want?',
-            'been': 'I have been waiting for you.',
-            'said': 'She said hello to me.',
-            'each': 'Each child gets a cookie.',
-            'asked': 'He asked a good question.',
-            'why': 'Why is the sky blue?',
-            'by': 'The book is by my bed.',
-            'my': 'My favorite color is blue.',
-            'try': 'Try your best!',
-            'put': 'Put the toy in the box.',
-            'putting': 'I am putting on my shoes.',
-            'only': 'Only five minutes left!',
-            'work': 'I work hard at school.',
-            'word': 'This is a new word.',
-            'world': 'The world is beautiful.'
+            'her': ['Her name is Sarah.', 'Her dog is very friendly.', 'Her favorite color is blue.'],
+            'who': ['Who is at the door?', 'Who wants to play?', 'Who made this cake?'],
+            'some': ['I have some cookies.', 'Can I have some water?', 'Some kids like to read.'],
+            'out': ['Let\'s go out to play.', 'The cat ran out the door.', 'It is sunny out today.'],
+            'about': ['Tell me about your day.', 'What is this book about?', 'I know about that game.'],
+            'too': ['I want to go too!', 'This cake is too sweet.', 'She likes ice cream too.'],
+            'two': ['I have two cats.', 'Two plus two equals four.', 'We have two minutes left.'],
+            'were': ['We were happy yesterday.', 'They were playing outside.', 'Where were you?'],
+            'what': ['What is your favorite color?', 'What time is it?', 'What did you say?'],
+            'come': ['Come here, please.', 'Come and see this!', 'When will you come?'],
+            'comes': ['The bus comes at eight.', 'Spring comes after winter.', 'She comes to school early.'],
+            'coming': ['The train is coming now.', 'I am coming right away.', 'Winter is coming soon.'],
+            'become': ['I want to become a teacher.', 'The sky will become dark.', 'You can become anything.'],
+            'becomes': ['She becomes happy when she sings.', 'The day becomes warmer.', 'He becomes a good friend.'],
+            'becoming': ['The sky is becoming dark.', 'I am becoming stronger.', 'The weather is becoming cold.'],
+            'their': ['Their house is big.', 'Their dog is very cute.', 'Their favorite game is fun.'],
+            'no': ['No, thank you.', 'No, I do not want that.', 'There is no time left.'],
+            'so': ['I am so excited!', 'It is so hot today.', 'You are so kind.'],
+            'also': ['I also like pizza.', 'She also wants to play.', 'We also have cookies.'],
+            'how': ['How are you today?', 'How do you do that?', 'How many are there?'],
+            'now': ['We can play now.', 'I want to go now.', 'It is time to eat now.'],
+            'where': ['Where is my book?', 'Where are you going?', 'Where did it go?'],
+            'here': ['Come here, please.', 'I am here with you.', 'Put it here on the table.'],
+            'there': ['The park is over there.', 'There are many flowers.', 'Look there at the sky.'],
+            'any': ['Do you have any questions?', 'I do not have any cookies.', 'Any time is fine.'],
+            'anywhere': ['We can go anywhere you want.', 'I cannot find it anywhere.', 'You can sit anywhere.'],
+            'anyone': ['Anyone can join the game.', 'Is anyone here?', 'Anyone can learn to read.'],
+            'anything': ['You can ask me anything.', 'I do not want anything.', 'Anything is possible.'],
+            'many': ['There are many flowers.', 'How many do you want?', 'Many kids like to play.'],
+            'front': ['The car is in front of the house.', 'Stand in front of the line.', 'The front door is open.'],
+            'very': ['This cake is very good.', 'I am very happy today.', 'It is very cold outside.'],
+            'every': ['Every day is special.', 'Every child gets a cookie.', 'Every book is different.'],
+            'everywhere': ['We looked everywhere for the toy.', 'Flowers grow everywhere.', 'I see it everywhere.'],
+            'everyone': ['Everyone is welcome here.', 'Everyone likes to play.', 'Everyone can learn.'],
+            'everything': ['Everything will be okay.', 'Everything looks good.', 'I like everything here.'],
+            'could': ['Could you help me, please?', 'I could do that tomorrow.', 'Could we play now?'],
+            'would': ['Would you like some juice?', 'I would like to go.', 'Would that be okay?'],
+            'should': ['You should eat your vegetables.', 'Should we go now?', 'I should finish my work.'],
+            'when': ['When is your birthday?', 'When will you come?', 'When did that happen?'],
+            'which': ['Which book do you want?', 'Which way should we go?', 'Which one is yours?'],
+            'been': ['I have been waiting for you.', 'Have you been here before?', 'It has been a long day.'],
+            'said': ['She said hello to me.', 'He said it was fun.', 'I said yes to the game.'],
+            'each': ['Each child gets a cookie.', 'Each day is different.', 'Each book has a story.'],
+            'asked': ['He asked a good question.', 'She asked for help.', 'I asked my teacher.'],
+            'why': ['Why is the sky blue?', 'Why did you do that?', 'Why are you sad?'],
+            'by': ['The book is by my bed.', 'I will be there by three.', 'Stand by the door.'],
+            'my': ['My favorite color is blue.', 'My dog is very friendly.', 'My friend likes to read.'],
+            'try': ['Try your best!', 'I will try to help.', 'Try this game, it is fun.'],
+            'put': ['Put the toy in the box.', 'Put your coat on.', 'I put the book away.'],
+            'putting': ['I am putting on my shoes.', 'She is putting away toys.', 'We are putting up decorations.'],
+            'only': ['Only five minutes left!', 'I only have one cookie.', 'Only you can do this.'],
+            'work': ['I work hard at school.', 'This will work well.', 'The work is done.'],
+            'word': ['This is a new word.', 'What does this word mean?', 'I know that word.'],
+            'world': ['The world is beautiful.', 'People all over the world.', 'The whole world is watching.']
+        };
+        
+        // Helper method to get a random sentence variation for a word
+        this.getSentenceVariation = function(word) {
+            const sentences = this.wordStories[word.toLowerCase()];
+            if (Array.isArray(sentences)) {
+                return sentences[Math.floor(Math.random() * sentences.length)];
+            }
+            return sentences || `${word} is a word.`;
         };
         // Homophone mapping for Reading Practice
         this.homophones = {
@@ -722,7 +731,10 @@ class SightWordsGame {
             'scramble': "Welcome to Letter Scramble! Listen to the word and arrange the letters in the correct order. Drag the letters to spell the word.",
             'multiple-choice': "Welcome to Multiple Choice! Listen to the word and click on the correct spelling from the options below.",
             'flashcards': "Welcome to Flash Cards! Look at the word and listen to help you remember it. Click 'Show Next Card' when you're ready.",
-            'reading-practice': "Welcome to Reading Practice! Look at the word and try to say it out loud. If you get it wrong, you'll hear the correct pronunciation to help you learn."
+            'reading-practice': "Welcome to Reading Practice! Look at the word and try to say it out loud. If you get it wrong, you'll hear the correct pronunciation to help you learn.",
+            'oral-fluency': "Welcome to Oral Reading Fluency! Read the sentence out loud. Try to read it three times, getting faster and more fluent each time. After you read, you can hear your recording back.",
+            'self-dictation': "Welcome to Self-Dictation! Read the sentence, then cover it and write it from memory. Check your spelling, punctuation, and capitalization before uncovering.",
+            'word-cards': "Welcome to Word Cards! Choose Beat the Clock to read words quickly, or Trace, Flip, and Spell to practice spelling."
         };
 
         const instruction = instructions[gameType] || "Welcome to the game! Let's start playing.";
@@ -746,7 +758,10 @@ class SightWordsGame {
             'scramble': 'scramble-game',
             'multiple-choice': 'multiple-choice-game',
             'flashcards': 'flashcards-game',
-            'reading-practice': 'reading-practice-game'
+            'reading-practice': 'reading-practice-game',
+            'oral-fluency': 'oral-fluency-game',
+            'self-dictation': 'self-dictation-game',
+            'word-cards': 'word-cards-game'
         };
 
         const activeMode = document.getElementById(gameModeMap[gameType]);
@@ -774,6 +789,15 @@ class SightWordsGame {
                 break;
             case 'reading-practice':
                 this.setupReadingPracticeGame();
+                break;
+            case 'oral-fluency':
+                this.setupOralFluencyGame();
+                break;
+            case 'self-dictation':
+                this.setupSelfDictationGame();
+                break;
+            case 'word-cards':
+                this.setupWordCardsGame();
                 break;
         }
     }
@@ -1361,6 +1385,416 @@ class SightWordsGame {
         this.hideLiveTranscription();
     }
 
+    // Oral Reading Fluency Game Setup
+    setupOralFluencyGame() {
+        this.fluencyReadingCount = 0;
+        this.fluencyMaxReadings = 3;
+        this.fluencyRecording = null;
+        this.fluencyMediaRecorder = null;
+        this.fluencyAudioChunks = [];
+        this.fluencyStartTime = null;
+        this.fluencyWordCount = 0;
+        
+        const startBtn = document.getElementById('start-recording-fluency');
+        const playbackBtn = document.getElementById('playback-recording');
+        const sentenceDisplay = document.getElementById('fluency-sentence-display');
+        const readingCount = document.getElementById('reading-count');
+        const wpmDisplay = document.getElementById('wpm-display');
+        
+        // Get current sentence
+        const currentWord = this.wordList[this.currentWordIndex];
+        const sentence = this.getSentenceVariation(currentWord);
+        sentenceDisplay.textContent = sentence;
+        this.fluencyWordCount = sentence.split(' ').length;
+        
+        // Reset UI
+        readingCount.textContent = `Reading: 0 of ${this.fluencyMaxReadings}`;
+        wpmDisplay.textContent = 'Words per minute: --';
+        playbackBtn.style.display = 'none';
+        
+        // Remove existing listeners
+        const newStartBtn = startBtn.cloneNode(true);
+        const newPlaybackBtn = playbackBtn.cloneNode(true);
+        startBtn.parentNode.replaceChild(newStartBtn, startBtn);
+        playbackBtn.parentNode.replaceChild(newPlaybackBtn, playbackBtn);
+        
+        newStartBtn.addEventListener('click', () => {
+            this.startFluencyRecording();
+        });
+        
+        newPlaybackBtn.addEventListener('click', () => {
+            this.playbackFluencyRecording();
+        });
+    }
+
+    async startFluencyRecording() {
+        const startBtn = document.getElementById('start-recording-fluency');
+        const statusDiv = document.getElementById('fluency-recording-status');
+        const readingCount = document.getElementById('reading-count');
+        
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            this.fluencyMediaRecorder = new MediaRecorder(stream);
+            this.fluencyAudioChunks = [];
+            
+            this.fluencyMediaRecorder.ondataavailable = (event) => {
+                this.fluencyAudioChunks.push(event.data);
+            };
+            
+            this.fluencyMediaRecorder.onstop = () => {
+                const audioBlob = new Blob(this.fluencyAudioChunks, { type: 'audio/webm' });
+                this.fluencyRecording = URL.createObjectURL(audioBlob);
+                this.calculateWPM();
+                document.getElementById('playback-recording').style.display = 'block';
+                stream.getTracks().forEach(track => track.stop());
+            };
+            
+            this.fluencyMediaRecorder.start();
+            this.fluencyStartTime = Date.now();
+            this.fluencyReadingCount++;
+            readingCount.textContent = `Reading: ${this.fluencyReadingCount} of ${this.fluencyMaxReadings}`;
+            
+            startBtn.textContent = 'Stop Reading';
+            statusDiv.textContent = 'Recording... Read the sentence out loud!';
+            statusDiv.className = 'recording-status recording';
+            
+            startBtn.onclick = () => {
+                this.stopFluencyRecording();
+            };
+        } catch (error) {
+            console.error('Error starting recording:', error);
+            statusDiv.textContent = 'Error: Could not access microphone';
+            statusDiv.className = 'recording-status error';
+        }
+    }
+
+    stopFluencyRecording() {
+        if (this.fluencyMediaRecorder && this.fluencyMediaRecorder.state !== 'inactive') {
+            this.fluencyMediaRecorder.stop();
+        }
+        
+        const startBtn = document.getElementById('start-recording-fluency');
+        const statusDiv = document.getElementById('fluency-recording-status');
+        
+        startBtn.textContent = 'Start Reading';
+        statusDiv.textContent = 'Recording stopped. Click Play Back to hear your reading.';
+        statusDiv.className = 'recording-status ready';
+        
+        startBtn.onclick = () => {
+            if (this.fluencyReadingCount < this.fluencyMaxReadings) {
+                this.startFluencyRecording();
+            } else {
+                this.nextWord();
+            }
+        };
+    }
+
+    calculateWPM() {
+        if (!this.fluencyStartTime) return;
+        
+        const duration = (Date.now() - this.fluencyStartTime) / 1000 / 60; // minutes
+        const wpm = Math.round(this.fluencyWordCount / duration);
+        document.getElementById('wpm-display').textContent = `Words per minute: ${wpm}`;
+    }
+
+    playbackFluencyRecording() {
+        if (this.fluencyRecording) {
+            const audio = new Audio(this.fluencyRecording);
+            audio.play();
+        }
+    }
+
+    // Self-Dictation Game Setup
+    setupSelfDictationGame() {
+        const currentWord = this.wordList[this.currentWordIndex];
+        const sentence = this.getSentenceVariation(currentWord);
+        const sentenceDisplay = document.getElementById('dictation-sentence-display');
+        sentenceDisplay.textContent = sentence;
+        this.currentDictationSentence = sentence;
+        
+        const coverBtn = document.getElementById('cover-sentence');
+        const uncoverBtn = document.getElementById('uncover-sentence');
+        const checkBtn = document.getElementById('check-dictation');
+        const input = document.getElementById('dictation-input');
+        const checklist = document.getElementById('proofreading-checklist');
+        
+        // Reset UI
+        input.value = '';
+        sentenceDisplay.style.opacity = '1';
+        coverBtn.style.display = 'block';
+        uncoverBtn.style.display = 'none';
+        checklist.style.display = 'none';
+        
+        // Remove existing listeners
+        const newCoverBtn = coverBtn.cloneNode(true);
+        const newUncoverBtn = uncoverBtn.cloneNode(true);
+        const newCheckBtn = checkBtn.cloneNode(true);
+        coverBtn.parentNode.replaceChild(newCoverBtn, coverBtn);
+        uncoverBtn.parentNode.replaceChild(newUncoverBtn, uncoverBtn);
+        checkBtn.parentNode.replaceChild(newCheckBtn, checkBtn);
+        
+        newCoverBtn.addEventListener('click', () => {
+            sentenceDisplay.style.opacity = '0.1';
+            newCoverBtn.style.display = 'none';
+            newUncoverBtn.style.display = 'block';
+            input.focus();
+        });
+        
+        newUncoverBtn.addEventListener('click', () => {
+            sentenceDisplay.style.opacity = '1';
+            newUncoverBtn.style.display = 'none';
+            newCoverBtn.style.display = 'block';
+        });
+        
+        newCheckBtn.addEventListener('click', () => {
+            this.checkDictation();
+        });
+    }
+
+    checkDictation() {
+        const input = document.getElementById('dictation-input');
+        const userText = input.value.trim();
+        const correctText = this.currentDictationSentence.trim();
+        const checklist = document.getElementById('proofreading-checklist');
+        
+        checklist.style.display = 'block';
+        
+        // Check spelling, punctuation, capitalization
+        const spellingCorrect = userText.toLowerCase() === correctText.toLowerCase();
+        const punctuationCorrect = this.checkPunctuation(userText, correctText);
+        const capitalizationCorrect = this.checkCapitalization(userText, correctText);
+        
+        document.getElementById('check-spelling').checked = spellingCorrect;
+        document.getElementById('check-punctuation').checked = punctuationCorrect;
+        document.getElementById('check-capitalization').checked = capitalizationCorrect;
+        
+        const allCorrect = spellingCorrect && punctuationCorrect && capitalizationCorrect;
+        
+        if (allCorrect) {
+            this.showFeedback(true, correctText, userText);
+            setTimeout(() => {
+                this.nextWord();
+            }, 3000);
+        } else {
+            this.showFeedback(false, correctText, userText);
+        }
+    }
+
+    checkPunctuation(userText, correctText) {
+        // Simple punctuation check - compare punctuation marks
+        const userPunct = userText.replace(/[a-zA-Z0-9\s]/g, '');
+        const correctPunct = correctText.replace(/[a-zA-Z0-9\s]/g, '');
+        return userPunct === correctPunct;
+    }
+
+    checkCapitalization(userText, correctText) {
+        // Check if first letter is capitalized
+        return userText.charAt(0) === correctText.charAt(0) && 
+               userText.charAt(0) === userText.charAt(0).toUpperCase();
+    }
+
+    // Word Cards Game Setup
+    setupWordCardsGame() {
+        // Mode selector
+        document.querySelectorAll('.mode-select-btn').forEach(btn => {
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            newBtn.addEventListener('click', () => {
+                document.querySelectorAll('.mode-select-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.card-mode').forEach(m => m.classList.remove('active'));
+                newBtn.classList.add('active');
+                const mode = newBtn.dataset.mode;
+                document.getElementById(`${mode}-mode`).classList.add('active');
+            });
+        });
+        
+        // Beat the Clock setup
+        this.setupBeatTheClock();
+        
+        // Trace, Flip, and Spell setup
+        this.setupTraceFlipSpell();
+    }
+
+    setupBeatTheClock() {
+        this.beatClockTimer = null;
+        this.beatClockTimeLeft = 60;
+        this.beatClockWordIndex = 0;
+        this.beatClockWordsRead = 0;
+        
+        const startBtn = document.getElementById('start-beat-clock');
+        const nextBtn = document.getElementById('next-word-beat-clock');
+        const wordDisplay = document.getElementById('word-card-display');
+        const timerDisplay = document.getElementById('timer-display');
+        const wordCountDisplay = document.getElementById('word-count-display');
+        const wordCountSelect = document.getElementById('word-count-select');
+        
+        const newStartBtn = startBtn.cloneNode(true);
+        const newNextBtn = nextBtn.cloneNode(true);
+        startBtn.parentNode.replaceChild(newStartBtn, startBtn);
+        nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
+        
+        newStartBtn.addEventListener('click', () => {
+            const targetCount = parseInt(wordCountSelect.value);
+            this.startBeatTheClock(targetCount);
+        });
+        
+        newNextBtn.addEventListener('click', () => {
+            this.nextBeatClockWord();
+        });
+    }
+
+    startBeatTheClock(targetCount) {
+        this.beatClockTimeLeft = 60;
+        this.beatClockWordIndex = 0;
+        this.beatClockWordsRead = 0;
+        this.beatClockTargetCount = targetCount;
+        
+        const timerDisplay = document.getElementById('timer-display');
+        const wordCountDisplay = document.getElementById('word-count-display');
+        const wordDisplay = document.getElementById('word-card-display');
+        const startBtn = document.getElementById('start-beat-clock');
+        const nextBtn = document.getElementById('next-word-beat-clock');
+        
+        // Shuffle word list for this session
+        this.beatClockWordList = [...this.wordBank].sort(() => Math.random() - 0.5);
+        
+        wordDisplay.textContent = this.beatClockWordList[0];
+        wordCountDisplay.textContent = `Words: 0 / ${targetCount}`;
+        startBtn.style.display = 'none';
+        nextBtn.style.display = 'block';
+        
+        this.beatClockTimer = setInterval(() => {
+            this.beatClockTimeLeft--;
+            const minutes = Math.floor(this.beatClockTimeLeft / 60);
+            const seconds = this.beatClockTimeLeft % 60;
+            timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (this.beatClockTimeLeft <= 0) {
+                clearInterval(this.beatClockTimer);
+                this.endBeatTheClock();
+            }
+        }, 1000);
+    }
+
+    nextBeatClockWord() {
+        this.beatClockWordsRead++;
+        this.beatClockWordIndex++;
+        
+        const wordCountDisplay = document.getElementById('word-count-display');
+        const wordDisplay = document.getElementById('word-card-display');
+        
+        wordCountDisplay.textContent = `Words: ${this.beatClockWordsRead} / ${this.beatClockTargetCount}`;
+        
+        if (this.beatClockWordsRead >= this.beatClockTargetCount) {
+            this.endBeatTheClock(true);
+            return;
+        }
+        
+        if (this.beatClockWordIndex >= this.beatClockWordList.length) {
+            // Reshuffle if we run out
+            this.beatClockWordList = [...this.wordBank].sort(() => Math.random() - 0.5);
+            this.beatClockWordIndex = 0;
+        }
+        
+        wordDisplay.textContent = this.beatClockWordList[this.beatClockWordIndex];
+    }
+
+    endBeatTheClock(success = false) {
+        if (this.beatClockTimer) {
+            clearInterval(this.beatClockTimer);
+            this.beatClockTimer = null;
+        }
+        
+        const wordCountDisplay = document.getElementById('word-count-display');
+        const wordDisplay = document.getElementById('word-card-display');
+        const startBtn = document.getElementById('start-beat-clock');
+        const nextBtn = document.getElementById('next-word-beat-clock');
+        
+        if (success) {
+            wordDisplay.textContent = `🎉 Great job! You read ${this.beatClockWordsRead} words!`;
+            this.showCelebration();
+        } else {
+            wordDisplay.textContent = `Time's up! You read ${this.beatClockWordsRead} words. Try again!`;
+        }
+        
+        nextBtn.style.display = 'none';
+        startBtn.style.display = 'block';
+    }
+
+    setupTraceFlipSpell() {
+        this.traceWordIndex = 0;
+        this.traceCardFlipped = false;
+        this.traceWordList = [...this.wordBank].sort(() => Math.random() - 0.5);
+        
+        const startBtn = document.getElementById('start-trace');
+        const flipBtn = document.getElementById('flip-trace-card');
+        const checkBtn = document.getElementById('check-trace-spelling');
+        const nextBtn = document.getElementById('next-trace-word');
+        const wordDisplay = document.getElementById('trace-word-display');
+        const inputArea = document.getElementById('spelling-input-area');
+        const input = document.getElementById('trace-spelling-input');
+        
+        const newStartBtn = startBtn.cloneNode(true);
+        const newFlipBtn = flipBtn.cloneNode(true);
+        const newCheckBtn = checkBtn.cloneNode(true);
+        const newNextBtn = nextBtn.cloneNode(true);
+        
+        startBtn.parentNode.replaceChild(newStartBtn, startBtn);
+        flipBtn.parentNode.replaceChild(newFlipBtn, flipBtn);
+        checkBtn.parentNode.replaceChild(newCheckBtn, checkBtn);
+        nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
+        
+        newStartBtn.addEventListener('click', () => {
+            wordDisplay.textContent = this.traceWordList[0];
+            newStartBtn.style.display = 'none';
+            newFlipBtn.style.display = 'block';
+            this.traceCardFlipped = false;
+        });
+        
+        newFlipBtn.addEventListener('click', () => {
+            wordDisplay.textContent = '?';
+            this.traceCardFlipped = true;
+            newFlipBtn.style.display = 'none';
+            inputArea.style.display = 'block';
+            input.value = '';
+            input.focus();
+            newCheckBtn.style.display = 'block';
+        });
+        
+        newCheckBtn.addEventListener('click', () => {
+            const userSpelling = input.value.trim().toLowerCase();
+            const correctWord = this.traceWordList[this.traceWordIndex].toLowerCase();
+            const isCorrect = userSpelling === correctWord;
+            
+            if (isCorrect) {
+                wordDisplay.textContent = `✓ ${this.traceWordList[this.traceWordIndex]}`;
+                wordDisplay.style.color = '#48bb78';
+                this.showCelebration();
+            } else {
+                wordDisplay.textContent = `✗ The word is: ${this.traceWordList[this.traceWordIndex]}`;
+                wordDisplay.style.color = '#f56565';
+            }
+            
+            newCheckBtn.style.display = 'none';
+            newNextBtn.style.display = 'block';
+        });
+        
+        newNextBtn.addEventListener('click', () => {
+            this.traceWordIndex++;
+            if (this.traceWordIndex >= this.traceWordList.length) {
+                this.traceWordList = [...this.wordBank].sort(() => Math.random() - 0.5);
+                this.traceWordIndex = 0;
+            }
+            
+            wordDisplay.textContent = this.traceWordList[this.traceWordIndex];
+            wordDisplay.style.color = '#2d3748';
+            inputArea.style.display = 'none';
+            newNextBtn.style.display = 'none';
+            newFlipBtn.style.display = 'block';
+            this.traceCardFlipped = false;
+        });
+    }
+
     updateLiveTranscription(text) {
         const liveTranscriptionDiv = document.getElementById('live-transcription');
         if (text) {
@@ -1515,6 +1949,15 @@ class SightWordsGame {
             } else if (!this.microphonePermissionGranted && this.microphonePermissionRequested) {
                 this.updateRecordingStatus('error', 'Microphone permission needed');
             }
+        } else if (this.currentGame === 'oral-fluency') {
+            // Reset oral fluency UI
+            this.setupOralFluencyGame();
+        } else if (this.currentGame === 'self-dictation') {
+            // Reset self-dictation UI
+            this.setupSelfDictationGame();
+        } else if (this.currentGame === 'word-cards') {
+            // Word cards doesn't use word list progression
+            // It's a standalone game mode
         }
     }
 
@@ -2196,24 +2639,31 @@ class SightWordsGame {
                 userWord.toLowerCase() === homophone.toLowerCase()
             );
             
+            const sentence = Array.isArray(this.wordStories[currentWord]) 
+                ? this.wordStories[currentWord][0] 
+                : this.wordStories[currentWord] || `${currentWord} is a word.`;
+            
             if (isHomophone) {
                 feedbackMessage.innerHTML = `
                     <div class="feedback-text">Great! "${userWord}" is correct too! 🎉</div>
                     <div class="feedback-text">The word we're practicing is "${correctWord}"</div>
-                    <div class="feedback-sentence">${this.wordStories[currentWord]}</div>
+                    <div class="feedback-sentence">${sentence}</div>
                 `;
             } else {
                 feedbackMessage.innerHTML = `
                     <div class="feedback-text">Correct! 🎉</div>
-                    <div class="feedback-sentence">${this.wordStories[currentWord]}</div>
+                    <div class="feedback-sentence">${sentence}</div>
                 `;
             }
             feedbackMessage.className = 'feedback-message correct';
             this.showCelebration();
         } else {
+            const sentence = Array.isArray(this.wordStories[currentWord]) 
+                ? this.wordStories[currentWord][0] 
+                : this.wordStories[currentWord] || `${currentWord} is a word.`;
             feedbackMessage.innerHTML = `
                 <div class="feedback-text">Not quite. The correct spelling is "${correctWord}"</div>
-                <div class="feedback-sentence">${this.wordStories[currentWord]}</div>
+                <div class="feedback-sentence">${sentence}</div>
             `;
             feedbackMessage.className = 'feedback-message incorrect';
         }
@@ -2319,7 +2769,10 @@ class SightWordsGame {
             'scramble': '🔤 Letter Scramble',
             'multiple-choice': '🎯 Multiple Choice',
             'flashcards': '⚡ Flash Cards',
-            'reading-practice': '🎤 Reading Practice'
+            'reading-practice': '🎤 Reading Practice',
+            'oral-fluency': '📖 Oral Reading Fluency',
+            'self-dictation': '✏️ Self-Dictation',
+            'word-cards': '🃏 Word Cards'
         };
         return titles[this.currentGame] || 'Game';
     }

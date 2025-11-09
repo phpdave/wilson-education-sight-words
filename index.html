@@ -49,6 +49,21 @@
                             <span class="label">Reading Practice</span>
                             <span class="desc">Read and say the word</span>
                         </button>
+                        <button class="game-btn" data-game="oral-fluency">
+                            <span class="icon">📖</span>
+                            <span class="label">Oral Reading Fluency</span>
+                            <span class="desc">Read sentences fluently</span>
+                        </button>
+                        <button class="game-btn" data-game="self-dictation">
+                            <span class="icon">✏️</span>
+                            <span class="label">Self-Dictation</span>
+                            <span class="desc">Read, cover, write, check</span>
+                        </button>
+                        <button class="game-btn" data-game="word-cards">
+                            <span class="icon">🃏</span>
+                            <span class="label">Word Cards</span>
+                            <span class="desc">Beat the Clock & Trace</span>
+                        </button>
                     </div>
                 </div>
 
@@ -170,6 +185,94 @@
                             <div class="recording-status" id="recording-status"></div>
                             <div class="live-transcription" id="live-transcription"></div>
                             <div class="recognized-text" id="recognized-text"></div>
+                        </div>
+                    </div>
+
+                    <!-- Oral Reading Fluency Game -->
+                    <div id="oral-fluency-game" class="game-mode">
+                        <div class="fluency-display">
+                            <div class="sentence-display" id="fluency-sentence-display">Loading sentence...</div>
+                            <div class="wpm-display" id="wpm-display">Words per minute: --</div>
+                        </div>
+                        <div class="fluency-controls">
+                            <button id="start-recording-fluency" class="record-btn">
+                                <span class="record-icon">🎤</span>
+                                <span class="record-text">Start Reading</span>
+                            </button>
+                            <button id="playback-recording" class="playback-btn" style="display: none;">
+                                <span class="playback-icon">🔊</span>
+                                <span class="playback-text">Play Back</span>
+                            </button>
+                            <div class="reading-count" id="reading-count">Reading: 0 of 3</div>
+                        </div>
+                        <div class="recording-status" id="fluency-recording-status"></div>
+                        <div class="recognized-text" id="fluency-recognized-text"></div>
+                    </div>
+
+                    <!-- Self-Dictation Game -->
+                    <div id="self-dictation-game" class="game-mode">
+                        <div class="dictation-display">
+                            <div class="sentence-display" id="dictation-sentence-display">Loading sentence...</div>
+                            <button id="cover-sentence" class="cover-btn">Cover Sentence</button>
+                        </div>
+                        <div class="dictation-input-area">
+                            <textarea id="dictation-input" placeholder="Write the sentence here..." rows="3"></textarea>
+                            <div class="dictation-controls">
+                                <button id="check-dictation" class="check-btn">Check My Work</button>
+                                <button id="uncover-sentence" class="uncover-btn" style="display: none;">Uncover Sentence</button>
+                            </div>
+                        </div>
+                        <div class="proofreading-checklist" id="proofreading-checklist" style="display: none;">
+                            <h4>Proofread your sentence:</h4>
+                            <label><input type="checkbox" id="check-spelling"> Spelling</label>
+                            <label><input type="checkbox" id="check-punctuation"> Punctuation</label>
+                            <label><input type="checkbox" id="check-capitalization"> Capitalization</label>
+                        </div>
+                    </div>
+
+                    <!-- High Frequency Word Cards Game -->
+                    <div id="word-cards-game" class="game-mode">
+                        <div class="word-cards-mode-selector">
+                            <button class="mode-select-btn active" data-mode="beat-clock">Beat the Clock</button>
+                            <button class="mode-select-btn" data-mode="trace-flip-spell">Trace, Flip, and Spell</button>
+                        </div>
+                        
+                        <!-- Beat the Clock Mode -->
+                        <div id="beat-clock-mode" class="card-mode active">
+                            <div class="timer-display" id="timer-display">1:00</div>
+                            <div class="word-count-display" id="word-count-display">Words: 0 / 30</div>
+                            <div class="word-card-display" id="word-card-display">Click Start to begin!</div>
+                            <div class="beat-clock-controls">
+                                <button id="start-beat-clock" class="start-btn">Start</button>
+                                <button id="next-word-beat-clock" class="next-btn" style="display: none;">Next Word</button>
+                                <select id="word-count-select">
+                                    <option value="30">30 words</option>
+                                    <option value="45">45 words</option>
+                                    <option value="60">60 words</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Trace, Flip, and Spell Mode -->
+                        <div id="trace-flip-spell-mode" class="card-mode">
+                            <div class="word-card-display" id="trace-word-display">Click Start to begin!</div>
+                            <div class="trace-instructions" id="trace-instructions">
+                                <p>1. Read the word</p>
+                                <p>2. Trace each letter while naming it</p>
+                                <p>3. Say the word again</p>
+                                <p>4. Flip the card</p>
+                                <p>5. Spell from memory</p>
+                                <p>6. Check your spelling</p>
+                            </div>
+                            <div class="trace-controls">
+                                <button id="start-trace" class="start-btn">Start</button>
+                                <button id="flip-trace-card" class="flip-btn" style="display: none;">Flip Card</button>
+                                <button id="check-trace-spelling" class="check-btn" style="display: none;">Check Spelling</button>
+                                <button id="next-trace-word" class="next-btn" style="display: none;">Next Word</button>
+                            </div>
+                            <div class="spelling-input-area" id="spelling-input-area" style="display: none;">
+                                <input type="text" id="trace-spelling-input" placeholder="Spell the word from memory...">
+                            </div>
                         </div>
                     </div>
                 </div>
