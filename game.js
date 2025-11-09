@@ -87,13 +87,22 @@ class SightWordsGame {
             'world': ['The world is beautiful.', 'People all over the world.', 'The whole world is watching.']
         };
         
-        // Helper method to get a random sentence variation for a word
+        // Helper method to get a random sentence variation for a word (returns the text)
         this.getSentenceVariation = function(word) {
             const sentences = this.wordStories[word.toLowerCase()];
             if (Array.isArray(sentences)) {
                 return sentences[Math.floor(Math.random() * sentences.length)];
             }
             return sentences || `${word} is a word.`;
+        };
+        
+        // Helper method to get a random sentence variation index for a word (returns the index 0, 1, or 2)
+        this.getSentenceVariationIndex = function(word) {
+            const sentences = this.wordStories[word.toLowerCase()];
+            if (Array.isArray(sentences) && sentences.length > 0) {
+                return Math.floor(Math.random() * sentences.length);
+            }
+            return 0;
         };
         // Homophone mapping for Reading Practice
         this.homophones = {
@@ -2514,8 +2523,13 @@ class SightWordsGame {
             }
             
             window.audioController.speakEncouragement().then(() => {
-                // Read the sentence for context
-                return window.audioController.speakWordStory(currentWord);
+                // For spelling game, read a random sentence variation MP3; otherwise use word story
+                if (this.currentGame === 'spelling') {
+                    const variationIndex = this.getSentenceVariationIndex(currentWord);
+                    return window.audioController.speakSentenceVariation(currentWord, variationIndex);
+                } else {
+                    return window.audioController.speakWordStory(currentWord);
+                }
             }).then(() => {
                 // Remove highlighting after audio finishes
                 if (this.currentGame === 'multiple-choice') {
@@ -2540,8 +2554,13 @@ class SightWordsGame {
                 });
             } else {
                 window.audioController.speakCorrection(correctWord, userWord, context).then(() => {
-                    // Read the sentence for context
-                    return window.audioController.speakWordStory(currentWord);
+                    // For spelling game, read a random sentence variation MP3; otherwise use word story
+                    if (this.currentGame === 'spelling') {
+                        const variationIndex = this.getSentenceVariationIndex(currentWord);
+                        return window.audioController.speakSentenceVariation(currentWord, variationIndex);
+                    } else {
+                        return window.audioController.speakWordStory(currentWord);
+                    }
                 }).then(() => {
                     // Remove highlighting after audio finishes
                     if (this.currentGame === 'multiple-choice') {

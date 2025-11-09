@@ -356,6 +356,27 @@ class AudioController {
         }
     }
 
+    async speakSentenceVariation(word, variationIndex, onEnd) {
+        try {
+            // Try to play static sentence variation audio
+            // File naming: {word}-sentence-{index}.mp3 (e.g., her-sentence-0.mp3, her-sentence-1.mp3, her-sentence-2.mp3)
+            const audioPath = `audio/sentences/${word.toLowerCase()}-sentence-${variationIndex}.mp3`;
+            await this._playStaticAudio(audioPath, onEnd);
+        } catch (error) {
+            // Fallback to speech synthesis
+            console.log(`Using fallback speech for sentence variation: "${word}" variation ${variationIndex}`);
+            // Get the sentence text from the game's wordStories if available
+            if (window.sightWordsGame && window.sightWordsGame.wordStories) {
+                const sentences = window.sightWordsGame.wordStories[word.toLowerCase()];
+                if (Array.isArray(sentences) && sentences[variationIndex]) {
+                    this._playFallbackSpeech(sentences[variationIndex], onEnd);
+                    return;
+                }
+            }
+            this._playFallbackSpeech(word, onEnd);
+        }
+    }
+
     async speakPhrase(phrase, onEnd) {
         try {
             // Try to play static phrase audio
